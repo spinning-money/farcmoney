@@ -127,7 +127,7 @@ export const useWheelSound = () => {
               tickOsc.frequency.setValueAtTime(300, tickTime);
               tickOsc.frequency.exponentialRampToValueAtTime(150, tickTime + 0.1);
               
-              tickGain.gain.setValueAtTime(0.02, tickTime);
+              tickGain.gain.setValueAtTime(0.1, tickTime);
               tickGain.gain.exponentialRampToValueAtTime(0.001, tickTime + 0.1);
               
               tickOsc.connect(tickGain);
@@ -265,7 +265,7 @@ export const useWheelSound = () => {
           clickOsc.frequency.setValueAtTime(400, clickTime);
           clickOsc.frequency.exponentialRampToValueAtTime(200, clickTime + 0.1);
           
-          clickGain.gain.setValueAtTime(0.01, clickTime);
+          clickGain.gain.setValueAtTime(0.08, clickTime);
           clickGain.gain.exponentialRampToValueAtTime(0.001, clickTime + 0.1);
           
           clickOsc.connect(clickGain);
@@ -333,22 +333,49 @@ export const useWheelSound = () => {
   }, [initAudio]);
 
   const playWinSound = useCallback(() => {
-    // For mobile/Farcaster devices, use haptic feedback
+    // For mobile/Farcaster devices, try both haptic feedback and audio
     if (isMobileRef.current) {
       try {
-        // Use haptic feedback for win sound (success pattern)
+        // Try to unlock audio context first
+        unlockAudio();
+        
+        // 1. Haptic feedback
         if ('vibrate' in navigator) {
           navigator.vibrate([50, 100, 50, 100, 50]); // Success vibration pattern
         }
         
-        // Try to unlock audio context with silent audio
+        // 2. Try to play audio if context is unlocked
+        if (audioUnlockedRef.current && audioContextRef.current) {
+          const winTime = audioContextRef.current.currentTime;
+          
+          // Create ascending notes for win sound
+          const notes = [400, 500, 600, 700];
+          notes.forEach((freq, index) => {
+            const winOsc = audioContextRef.current!.createOscillator();
+            const winGain = audioContextRef.current!.createGain();
+            
+            winOsc.type = 'sine';
+            winOsc.frequency.setValueAtTime(freq, winTime);
+            
+            winGain.gain.setValueAtTime(0.04, winTime);
+            winGain.gain.exponentialRampToValueAtTime(0.001, winTime + 0.3);
+            
+            winOsc.connect(winGain);
+            winGain.connect(audioContextRef.current!.destination);
+            
+            winOsc.start(winTime + (index * 0.1));
+            winOsc.stop(winTime + (index * 0.1) + 0.3);
+          });
+        }
+        
+        // 3. Fallback: silent audio to keep context alive
         const audio = new Audio();
         audio.volume = 0;
         audio.play().catch(() => {
           // Ignore errors for silent audio
         });
       } catch (error) {
-        console.warn('⚠️ Mobile win haptic feedback failed:', error);
+        console.warn('⚠️ Mobile win feedback failed:', error);
       }
       return;
     }
@@ -386,7 +413,7 @@ export const useWheelSound = () => {
         winOsc.frequency.setValueAtTime(freq, winTime);
         
         // Configure gain for soft win sound
-        winGain.gain.setValueAtTime(0.015, winTime);
+        winGain.gain.setValueAtTime(0.06, winTime);
         winGain.gain.exponentialRampToValueAtTime(0.001, winTime + 0.3);
         
         // Connect and play
@@ -401,22 +428,49 @@ export const useWheelSound = () => {
   }, [initAudio]);
 
   const playLoseSound = useCallback(() => {
-    // For mobile/Farcaster devices, use haptic feedback
+    // For mobile/Farcaster devices, try both haptic feedback and audio
     if (isMobileRef.current) {
       try {
-        // Use haptic feedback for lose sound (failure pattern)
+        // Try to unlock audio context first
+        unlockAudio();
+        
+        // 1. Haptic feedback
         if ('vibrate' in navigator) {
           navigator.vibrate([200, 100, 200]); // Failure vibration pattern
         }
         
-        // Try to unlock audio context with silent audio
+        // 2. Try to play audio if context is unlocked
+        if (audioUnlockedRef.current && audioContextRef.current) {
+          const loseTime = audioContextRef.current.currentTime;
+          
+          // Create descending notes for lose sound
+          const notes = [600, 500, 400, 300];
+          notes.forEach((freq, index) => {
+            const loseOsc = audioContextRef.current!.createOscillator();
+            const loseGain = audioContextRef.current!.createGain();
+            
+            loseOsc.type = 'triangle';
+            loseOsc.frequency.setValueAtTime(freq, loseTime);
+            
+            loseGain.gain.setValueAtTime(0.03, loseTime);
+            loseGain.gain.exponentialRampToValueAtTime(0.001, loseTime + 0.4);
+            
+            loseOsc.connect(loseGain);
+            loseGain.connect(audioContextRef.current!.destination);
+            
+            loseOsc.start(loseTime + (index * 0.15));
+            loseOsc.stop(loseTime + (index * 0.15) + 0.4);
+          });
+        }
+        
+        // 3. Fallback: silent audio to keep context alive
         const audio = new Audio();
         audio.volume = 0;
         audio.play().catch(() => {
           // Ignore errors for silent audio
         });
       } catch (error) {
-        console.warn('⚠️ Mobile lose haptic feedback failed:', error);
+        console.warn('⚠️ Mobile lose feedback failed:', error);
       }
       return;
     }
@@ -454,7 +508,7 @@ export const useWheelSound = () => {
         loseOsc.frequency.setValueAtTime(freq, loseTime);
         
         // Configure gain for soft lose sound
-        loseGain.gain.setValueAtTime(0.01, loseTime);
+        loseGain.gain.setValueAtTime(0.05, loseTime);
         loseGain.gain.exponentialRampToValueAtTime(0.001, loseTime + 0.4);
         
         // Connect and play
