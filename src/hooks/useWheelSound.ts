@@ -163,7 +163,7 @@ export const useWheelSound = () => {
               tickOsc.frequency.setValueAtTime(300, tickTime);
               tickOsc.frequency.exponentialRampToValueAtTime(150, tickTime + 0.1);
               
-              tickGain.gain.setValueAtTime(1.5, tickTime);
+              tickGain.gain.setValueAtTime(3.0, tickTime);
               tickGain.gain.exponentialRampToValueAtTime(0.001, tickTime + 0.1);
               
               tickOsc.connect(tickGain);
