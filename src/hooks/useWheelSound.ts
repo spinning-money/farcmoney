@@ -1,23 +1,88 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 export const useWheelSound = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isPlayingRef = useRef(false);
+  const isMobileRef = useRef(false);
+  
+  // Check if device is mobile
+  useEffect(() => {
+    isMobileRef.current = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('📱 Device type:', isMobileRef.current ? 'Mobile' : 'Desktop');
+  }, []);
 
   // Initialize audio context
   const initAudio = useCallback(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      try {
+        // For iOS Safari and mobile browsers
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+        console.log('🎵 Audio context initialized for mobile');
+        return true;
+      } catch (error) {
+        console.warn('⚠️ Audio context not supported:', error);
+        return false;
+      }
     }
+    return true;
   }, []);
 
   const playWheelSound = useCallback(() => {
     if (!isPlayingRef.current) {
-      initAudio();
+      // For mobile devices, use simpler approach
+      if (isMobileRef.current) {
+        console.log('📱 Using mobile sound system');
+        isPlayingRef.current = true;
+        
+        // Create simple mobile wheel sound
+        const createMobileTick = () => {
+          if (!isPlayingRef.current) return;
+          
+          try {
+            // Create a simple beep sound for mobile
+            const audio = new Audio();
+            audio.volume = 0.1;
+            
+            // Generate a simple tone using Web Audio API if available
+            if (window.AudioContext || (window as any).webkitAudioContext) {
+              const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+              const oscillator = audioContext.createOscillator();
+              const gainNode = audioContext.createGain();
+              
+              oscillator.connect(gainNode);
+              gainNode.connect(audioContext.destination);
+              
+              oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+              oscillator.frequency.exponentialRampToValueAtTime(150, audioContext.currentTime + 0.1);
+              
+              gainNode.gain.setValueAtTime(0.02, audioContext.currentTime);
+              gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+              
+              oscillator.start(audioContext.currentTime);
+              oscillator.stop(audioContext.currentTime + 0.1);
+            }
+          } catch (error) {
+            console.warn('⚠️ Mobile sound failed:', error);
+          }
+        };
+        
+        createMobileTick();
+        intervalRef.current = setInterval(createMobileTick, 200);
+        return;
+      }
+      
+      // Desktop audio initialization
+      if (!initAudio()) {
+        console.warn('⚠️ Audio not supported on this device');
+        return;
+      }
       
       if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-        audioContextRef.current.resume();
+        // For iOS Safari, we need user interaction to resume audio
+        audioContextRef.current.resume().catch(error => {
+          console.warn('⚠️ Could not resume audio context:', error);
+        });
       }
 
       if (audioContextRef.current) {
@@ -98,12 +163,44 @@ export const useWheelSound = () => {
   }, []);
 
   const playButtonClick = useCallback(() => {
-    if (!audioContextRef.current) {
-      initAudio();
+    // For mobile devices, use simpler approach
+    if (isMobileRef.current) {
+      try {
+        // Create simple mobile button sound
+        if (window.AudioContext || (window as any).webkitAudioContext) {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+          oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+          
+          gainNode.gain.setValueAtTime(0.01, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+          
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.1);
+        }
+      } catch (error) {
+        console.warn('⚠️ Mobile button sound failed:', error);
+      }
+      return;
+    }
+    
+    // Desktop audio initialization
+    if (!initAudio()) {
+      console.warn('⚠️ Audio not supported on this device');
+      return;
     }
     
     if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
+      // For iOS Safari, we need user interaction to resume audio
+      audioContextRef.current.resume().catch(error => {
+        console.warn('⚠️ Could not resume audio context:', error);
+      });
     }
 
     if (audioContextRef.current) {
@@ -139,12 +236,17 @@ export const useWheelSound = () => {
   }, [initAudio]);
 
   const playWinSound = useCallback(() => {
-    if (!audioContextRef.current) {
-      initAudio();
+    // Mobile-friendly audio initialization
+    if (!initAudio()) {
+      console.warn('⚠️ Audio not supported on this device');
+      return;
     }
     
     if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
+      // For iOS Safari, we need user interaction to resume audio
+      audioContextRef.current.resume().catch(error => {
+        console.warn('⚠️ Could not resume audio context:', error);
+      });
     }
 
     if (audioContextRef.current) {
@@ -182,12 +284,17 @@ export const useWheelSound = () => {
   }, [initAudio]);
 
   const playLoseSound = useCallback(() => {
-    if (!audioContextRef.current) {
-      initAudio();
+    // Mobile-friendly audio initialization
+    if (!initAudio()) {
+      console.warn('⚠️ Audio not supported on this device');
+      return;
     }
     
     if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
+      // For iOS Safari, we need user interaction to resume audio
+      audioContextRef.current.resume().catch(error => {
+        console.warn('⚠️ Could not resume audio context:', error);
+      });
     }
 
     if (audioContextRef.current) {
