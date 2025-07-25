@@ -5,6 +5,7 @@ export const useWheelSound = () => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const isPlayingRef = useRef(false);
   const isMobileRef = useRef(false);
+  const audioUnlockedRef = useRef(false);
   
   // Check if device is mobile or Farcaster mini app
   useEffect(() => {
@@ -17,19 +18,44 @@ export const useWheelSound = () => {
     console.log('🔍 User Agent:', userAgent);
     console.log('🔗 URL:', window.location.href);
     
-    // Test audio capabilities
+    // Enhanced audio capability testing for mobile
     if (isMobile || isFarcaster) {
-      console.log('🎵 Testing audio capabilities...');
+      console.log('🎵 Testing mobile audio capabilities...');
+      
+      // Test 1: Basic Audio API
       try {
         const testAudio = new Audio();
         testAudio.volume = 0;
         testAudio.play().then(() => {
-          console.log('✅ Audio play is supported');
+          console.log('✅ Basic Audio API is supported');
         }).catch(error => {
-          console.warn('⚠️ Audio play failed:', error);
+          console.warn('⚠️ Basic Audio API failed:', error);
         });
       } catch (error) {
-        console.warn('⚠️ Audio creation failed:', error);
+        console.warn('⚠️ Basic Audio API creation failed:', error);
+      }
+      
+      // Test 2: Web Audio API
+      try {
+        if (window.AudioContext || (window as any).webkitAudioContext) {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          console.log('✅ Web Audio API is supported, state:', audioContext.state);
+          
+          if (audioContext.state === 'suspended') {
+            console.log('⚠️ AudioContext is suspended - needs user interaction');
+          }
+        } else {
+          console.warn('⚠️ Web Audio API not supported');
+        }
+      } catch (error) {
+        console.warn('⚠️ Web Audio API test failed:', error);
+      }
+      
+      // Test 3: Vibration API
+      if ('vibrate' in navigator) {
+        console.log('✅ Vibration API is supported');
+      } else {
+        console.warn('⚠️ Vibration API not supported');
       }
     }
   }, []);
@@ -40,7 +66,7 @@ export const useWheelSound = () => {
       try {
         // For iOS Safari and mobile browsers
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
-        console.log('🎵 Audio context initialized for mobile');
+        console.log('🎵 Audio context initialized for mobile, state:', audioContextRef.current.state);
         return true;
       } catch (error) {
         console.warn('⚠️ Audio context not supported:', error);
@@ -50,36 +76,80 @@ export const useWheelSound = () => {
     return true;
   }, []);
 
+  // Unlock audio context with user interaction
+  const unlockAudio = useCallback(() => {
+    if (audioUnlockedRef.current) return;
+    
+    try {
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().then(() => {
+          console.log('✅ Audio context unlocked successfully');
+          audioUnlockedRef.current = true;
+        }).catch(error => {
+          console.warn('⚠️ Failed to unlock audio context:', error);
+        });
+      } else if (audioContextRef.current) {
+        audioUnlockedRef.current = true;
+        console.log('✅ Audio context already unlocked');
+      }
+    } catch (error) {
+      console.warn('⚠️ Audio unlock failed:', error);
+    }
+  }, []);
+
   const playWheelSound = useCallback(() => {
     if (!isPlayingRef.current) {
-      // For mobile/Farcaster devices, use haptic feedback instead of sound
+      // For mobile/Farcaster devices, try both haptic feedback and audio
       if (isMobileRef.current) {
-        console.log('📱 Using Farcaster mini app haptic feedback system');
+        console.log('📱 Using mobile/Farcaster sound + haptic system');
         isPlayingRef.current = true;
         
-        // Create haptic feedback for wheel spinning
-        const createHapticTick = () => {
+        // Try to unlock audio context first
+        unlockAudio();
+        
+        // Create combined haptic and audio feedback
+        const createMobileTick = () => {
           if (!isPlayingRef.current) return;
           
           try {
-            // Try to use haptic feedback if available
+            // 1. Haptic feedback
             if ('vibrate' in navigator) {
               navigator.vibrate(10); // Very short vibration
             }
             
-            // Also try to create a silent audio to unlock audio context
+            // 2. Try to play audio if context is unlocked
+            if (audioUnlockedRef.current && audioContextRef.current) {
+              const tickTime = audioContextRef.current.currentTime;
+              const tickOsc = audioContextRef.current.createOscillator();
+              const tickGain = audioContextRef.current.createGain();
+              
+              tickOsc.type = 'sine';
+              tickOsc.frequency.setValueAtTime(300, tickTime);
+              tickOsc.frequency.exponentialRampToValueAtTime(150, tickTime + 0.1);
+              
+              tickGain.gain.setValueAtTime(0.02, tickTime);
+              tickGain.gain.exponentialRampToValueAtTime(0.001, tickTime + 0.1);
+              
+              tickOsc.connect(tickGain);
+              tickGain.connect(audioContextRef.current.destination);
+              
+              tickOsc.start(tickTime);
+              tickOsc.stop(tickTime + 0.1);
+            }
+            
+            // 3. Fallback: silent audio to keep context alive
             const audio = new Audio();
             audio.volume = 0;
             audio.play().catch(() => {
               // Ignore errors for silent audio
             });
           } catch (error) {
-            console.warn('⚠️ Haptic feedback failed:', error);
+            console.warn('⚠️ Mobile tick failed:', error);
           }
         };
         
-        createHapticTick();
-        intervalRef.current = setInterval(createHapticTick, 200); // Faster haptic feedback
+        createMobileTick();
+        intervalRef.current = setInterval(createMobileTick, 200);
         return;
       }
       
@@ -174,22 +244,45 @@ export const useWheelSound = () => {
   }, []);
 
   const playButtonClick = useCallback(() => {
-    // For mobile/Farcaster devices, use haptic feedback
+    // For mobile/Farcaster devices, try both haptic feedback and audio
     if (isMobileRef.current) {
       try {
-        // Use haptic feedback for button clicks
+        // Try to unlock audio context first
+        unlockAudio();
+        
+        // 1. Haptic feedback
         if ('vibrate' in navigator) {
           navigator.vibrate(20); // Short vibration for button click
         }
         
-        // Try to unlock audio context with silent audio
+        // 2. Try to play audio if context is unlocked
+        if (audioUnlockedRef.current && audioContextRef.current) {
+          const clickTime = audioContextRef.current.currentTime;
+          const clickOsc = audioContextRef.current.createOscillator();
+          const clickGain = audioContextRef.current.createGain();
+          
+          clickOsc.type = 'sine';
+          clickOsc.frequency.setValueAtTime(400, clickTime);
+          clickOsc.frequency.exponentialRampToValueAtTime(200, clickTime + 0.1);
+          
+          clickGain.gain.setValueAtTime(0.01, clickTime);
+          clickGain.gain.exponentialRampToValueAtTime(0.001, clickTime + 0.1);
+          
+          clickOsc.connect(clickGain);
+          clickGain.connect(audioContextRef.current.destination);
+          
+          clickOsc.start(clickTime);
+          clickOsc.stop(clickTime + 0.1);
+        }
+        
+        // 3. Fallback: silent audio to keep context alive
         const audio = new Audio();
         audio.volume = 0;
         audio.play().catch(() => {
           // Ignore errors for silent audio
         });
       } catch (error) {
-        console.warn('⚠️ Mobile button haptic feedback failed:', error);
+        console.warn('⚠️ Mobile button feedback failed:', error);
       }
       return;
     }
