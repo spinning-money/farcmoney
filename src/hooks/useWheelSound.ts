@@ -10,11 +10,28 @@ export const useWheelSound = () => {
   useEffect(() => {
     const userAgent = navigator.userAgent;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-    const isFarcaster = userAgent.includes('Farcaster') || userAgent.includes('farcaster');
+    const isFarcaster = userAgent.includes('Farcaster') || userAgent.includes('farcaster') || window.location.href.includes('farcaster');
     
     isMobileRef.current = isMobile || isFarcaster;
     console.log('📱 Device type:', isMobileRef.current ? 'Mobile/Farcaster' : 'Desktop');
     console.log('🔍 User Agent:', userAgent);
+    console.log('🔗 URL:', window.location.href);
+    
+    // Test audio capabilities
+    if (isMobile || isFarcaster) {
+      console.log('🎵 Testing audio capabilities...');
+      try {
+        const testAudio = new Audio();
+        testAudio.volume = 0;
+        testAudio.play().then(() => {
+          console.log('✅ Audio play is supported');
+        }).catch(error => {
+          console.warn('⚠️ Audio play failed:', error);
+        });
+      } catch (error) {
+        console.warn('⚠️ Audio creation failed:', error);
+      }
+    }
   }, []);
 
   // Initialize audio context
@@ -35,50 +52,34 @@ export const useWheelSound = () => {
 
   const playWheelSound = useCallback(() => {
     if (!isPlayingRef.current) {
-      // For mobile/Farcaster devices, use ultra-simple approach
+      // For mobile/Farcaster devices, use haptic feedback instead of sound
       if (isMobileRef.current) {
-        console.log('📱 Using Farcaster mini app sound system');
+        console.log('📱 Using Farcaster mini app haptic feedback system');
         isPlayingRef.current = true;
         
-        // Create ultra-simple mobile wheel sound
-        const createMobileTick = () => {
+        // Create haptic feedback for wheel spinning
+        const createHapticTick = () => {
           if (!isPlayingRef.current) return;
           
           try {
-            // Use HTML5 Audio for maximum compatibility
-            const audio = new Audio();
-            
-            // Create a simple data URL for a beep sound
-            const sampleRate = 44100;
-            const duration = 0.1; // 100ms
-            const frequency = 300;
-            const samples = Math.floor(sampleRate * duration);
-            const audioBuffer = new ArrayBuffer(samples * 2);
-            const view = new DataView(audioBuffer);
-            
-            for (let i = 0; i < samples; i++) {
-              const value = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.1;
-              view.setInt16(i * 2, value * 32767, true);
+            // Try to use haptic feedback if available
+            if ('vibrate' in navigator) {
+              navigator.vibrate(10); // Very short vibration
             }
             
-            const blob = new Blob([audioBuffer], { type: 'audio/wav' });
-            const url = URL.createObjectURL(blob);
-            
-            audio.src = url;
-            audio.volume = 0.05; // Very low volume
-            audio.play().catch(error => {
-              console.warn('⚠️ Mobile audio play failed:', error);
+            // Also try to create a silent audio to unlock audio context
+            const audio = new Audio();
+            audio.volume = 0;
+            audio.play().catch(() => {
+              // Ignore errors for silent audio
             });
-            
-            // Clean up URL after playing
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
           } catch (error) {
-            console.warn('⚠️ Mobile sound generation failed:', error);
+            console.warn('⚠️ Haptic feedback failed:', error);
           }
         };
         
-        createMobileTick();
-        intervalRef.current = setInterval(createMobileTick, 300); // Slower for mobile
+        createHapticTick();
+        intervalRef.current = setInterval(createHapticTick, 200); // Faster haptic feedback
         return;
       }
       
@@ -173,38 +174,22 @@ export const useWheelSound = () => {
   }, []);
 
   const playButtonClick = useCallback(() => {
-    // For mobile/Farcaster devices, use ultra-simple approach
+    // For mobile/Farcaster devices, use haptic feedback
     if (isMobileRef.current) {
       try {
-        // Use HTML5 Audio for maximum compatibility
-        const audio = new Audio();
-        
-        // Create a simple data URL for a button click sound
-        const sampleRate = 44100;
-        const duration = 0.05; // 50ms
-        const frequency = 400;
-        const samples = Math.floor(sampleRate * duration);
-        const audioBuffer = new ArrayBuffer(samples * 2);
-        const view = new DataView(audioBuffer);
-        
-        for (let i = 0; i < samples; i++) {
-          const value = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.05;
-          view.setInt16(i * 2, value * 32767, true);
+        // Use haptic feedback for button clicks
+        if ('vibrate' in navigator) {
+          navigator.vibrate(20); // Short vibration for button click
         }
         
-        const blob = new Blob([audioBuffer], { type: 'audio/wav' });
-        const url = URL.createObjectURL(blob);
-        
-        audio.src = url;
-        audio.volume = 0.03; // Very low volume
-        audio.play().catch(error => {
-          console.warn('⚠️ Mobile button audio play failed:', error);
+        // Try to unlock audio context with silent audio
+        const audio = new Audio();
+        audio.volume = 0;
+        audio.play().catch(() => {
+          // Ignore errors for silent audio
         });
-        
-        // Clean up URL after playing
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
       } catch (error) {
-        console.warn('⚠️ Mobile button sound generation failed:', error);
+        console.warn('⚠️ Mobile button haptic feedback failed:', error);
       }
       return;
     }
@@ -255,41 +240,22 @@ export const useWheelSound = () => {
   }, [initAudio]);
 
   const playWinSound = useCallback(() => {
-    // For mobile/Farcaster devices, use ultra-simple approach
+    // For mobile/Farcaster devices, use haptic feedback
     if (isMobileRef.current) {
       try {
-        // Use HTML5 Audio for maximum compatibility
-        const audio = new Audio();
-        
-        // Create a simple ascending tone for win sound
-        const sampleRate = 44100;
-        const duration = 0.3; // 300ms
-        const startFreq = 400;
-        const endFreq = 700;
-        const samples = Math.floor(sampleRate * duration);
-        const audioBuffer = new ArrayBuffer(samples * 2);
-        const view = new DataView(audioBuffer);
-        
-        for (let i = 0; i < samples; i++) {
-          const progress = i / samples;
-          const frequency = startFreq + (endFreq - startFreq) * progress;
-          const value = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.03;
-          view.setInt16(i * 2, value * 32767, true);
+        // Use haptic feedback for win sound (success pattern)
+        if ('vibrate' in navigator) {
+          navigator.vibrate([50, 100, 50, 100, 50]); // Success vibration pattern
         }
         
-        const blob = new Blob([audioBuffer], { type: 'audio/wav' });
-        const url = URL.createObjectURL(blob);
-        
-        audio.src = url;
-        audio.volume = 0.02; // Very low volume
-        audio.play().catch(error => {
-          console.warn('⚠️ Mobile win audio play failed:', error);
+        // Try to unlock audio context with silent audio
+        const audio = new Audio();
+        audio.volume = 0;
+        audio.play().catch(() => {
+          // Ignore errors for silent audio
         });
-        
-        // Clean up URL after playing
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
       } catch (error) {
-        console.warn('⚠️ Mobile win sound generation failed:', error);
+        console.warn('⚠️ Mobile win haptic feedback failed:', error);
       }
       return;
     }
@@ -342,41 +308,22 @@ export const useWheelSound = () => {
   }, [initAudio]);
 
   const playLoseSound = useCallback(() => {
-    // For mobile/Farcaster devices, use ultra-simple approach
+    // For mobile/Farcaster devices, use haptic feedback
     if (isMobileRef.current) {
       try {
-        // Use HTML5 Audio for maximum compatibility
-        const audio = new Audio();
-        
-        // Create a simple descending tone for lose sound
-        const sampleRate = 44100;
-        const duration = 0.4; // 400ms
-        const startFreq = 600;
-        const endFreq = 300;
-        const samples = Math.floor(sampleRate * duration);
-        const audioBuffer = new ArrayBuffer(samples * 2);
-        const view = new DataView(audioBuffer);
-        
-        for (let i = 0; i < samples; i++) {
-          const progress = i / samples;
-          const frequency = startFreq + (endFreq - startFreq) * progress;
-          const value = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.02;
-          view.setInt16(i * 2, value * 32767, true);
+        // Use haptic feedback for lose sound (failure pattern)
+        if ('vibrate' in navigator) {
+          navigator.vibrate([200, 100, 200]); // Failure vibration pattern
         }
         
-        const blob = new Blob([audioBuffer], { type: 'audio/wav' });
-        const url = URL.createObjectURL(blob);
-        
-        audio.src = url;
-        audio.volume = 0.015; // Very low volume
-        audio.play().catch(error => {
-          console.warn('⚠️ Mobile lose audio play failed:', error);
+        // Try to unlock audio context with silent audio
+        const audio = new Audio();
+        audio.volume = 0;
+        audio.play().catch(() => {
+          // Ignore errors for silent audio
         });
-        
-        // Clean up URL after playing
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
       } catch (error) {
-        console.warn('⚠️ Mobile lose sound generation failed:', error);
+        console.warn('⚠️ Mobile lose haptic feedback failed:', error);
       }
       return;
     }
