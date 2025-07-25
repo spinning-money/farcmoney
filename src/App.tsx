@@ -206,6 +206,19 @@ function MainApp() {
             }));
             // Don't auto-clear the result - let user see it until next spin
           } : undefined}
+          onSpinCancel={() => {
+            console.log('❌ Spin cancelled by user');
+            // Clear any pending states
+            if (activeNetwork === 'monad') {
+              setMonadSpinning(false);
+              setMonadSpinState(prev => ({
+                ...prev,
+                isSpinning: false,
+                resultReceived: false
+              }));
+              monadEvents.clearLatestSpinResult();
+            }
+          }}
         />
       </div>
 

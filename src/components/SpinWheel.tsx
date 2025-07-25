@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { SpinState } from '../hooks/useSpinEvents';
 import { MonadSpinEvent } from '../hooks/useMonadEvents';
+import { useWheelSound } from '../hooks/useWheelSound';
 
 // Base network prizes (ETH)
 const BASE_PRIZES = [
@@ -33,11 +34,13 @@ interface SpinWheelProps {
   onResultProcessed?: () => void;
   monadSpinning?: boolean;
   onMonadSpinComplete?: () => void;
+  onSpinCancel?: () => void;
 }
 
-const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, onResultProcessed, monadSpinning, onMonadSpinComplete }: SpinWheelProps) => {
+const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, onResultProcessed, monadSpinning, onMonadSpinComplete, onSpinCancel }: SpinWheelProps) => {
   const [pulseScale, setPulseScale] = useState(1);
   const [localSpinState, setLocalSpinState] = useState(spinState);
+  const { playWheelSound, stopWheelSound, setSpeed, playWinSound, playLoseSound } = useWheelSound();
   
   // Mobile-first: çark genişliği ekrana göre
   const size = network === 'base' ? Math.min(window.innerWidth * 0.85, 360) : Math.min(window.innerWidth * 0.85, 400);
@@ -100,7 +103,26 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
   // Sync localSpinState with spinState for both networks
   useEffect(() => {
     setLocalSpinState(spinState);
-  }, [spinState, network]);
+    
+    // Start wheel sound when Base network starts spinning
+    if (network === 'base' && spinState.isSpinning && !localSpinState.isSpinning) {
+      playWheelSound();
+    }
+    
+    // Stop wheel sound when Base network stops spinning (including cancellation)
+    if (network === 'base' && !spinState.isSpinning && localSpinState.isSpinning) {
+      stopWheelSound();
+      // Notify parent about spin cancellation
+      onSpinCancel?.();
+    }
+  }, [spinState, network, localSpinState.isSpinning, playWheelSound, stopWheelSound, onSpinCancel]);
+
+  // Force stop sound when component unmounts or network changes
+  useEffect(() => {
+    return () => {
+      stopWheelSound();
+    };
+  }, [stopWheelSound]);
 
   // Start spinning for Monad (same as Base startSpin)
   useEffect(() => {
@@ -112,8 +134,20 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
         resultReceived: false,
         prizeIndex: undefined
       }));
+      // Start wheel sound
+      playWheelSound();
     }
-  }, [network, monadSpinning]);
+    
+      // Stop sound when Monad spinning stops
+  if (network === 'monad' && !monadSpinning && localSpinState.isSpinning) {
+    stopWheelSound();
+  }
+  
+  // Stop sound when Base spinning stops
+  if (network === 'base' && !spinState.isSpinning && localSpinState.isSpinning) {
+    stopWheelSound();
+  }
+  }, [network, monadSpinning, localSpinState.isSpinning, playWheelSound, stopWheelSound]);
 
   // Pulsing animation for winning segment
   useEffect(() => {
@@ -142,6 +176,7 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
           const rotationSpeed = 0.3; // degrees per millisecond
           const newRotation = baseRotation + (elapsed * rotationSpeed);
           setLocalSpinState(prev => ({ ...prev, currentRotation: newRotation }));
+          
           animationId = requestAnimationFrame(animate);
         } else {
           // Final animation to target angle
@@ -153,6 +188,7 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
             const targetRotation = localSpinState.targetAngle || 0;
             const currentRotation = baseRotation + (easeOut * (targetRotation - baseRotation));
             setLocalSpinState(prev => ({ ...prev, currentRotation }));
+            
             animationId = requestAnimationFrame(animate);
           } else {
             // Animation complete
@@ -161,6 +197,9 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
               currentRotation: localSpinState.targetAngle || 0,
               isSpinning: false 
             }));
+            
+            // Stop wheel sound immediately when animation completes
+            stopWheelSound();
             
             // Notify parent that Monad spin is complete
             if (network === 'monad') {
@@ -178,7 +217,7 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
         cancelAnimationFrame(animationId);
       }
     };
-  }, [localSpinState.isSpinning, localSpinState.resultReceived, localSpinState.targetAngle]);
+  }, [localSpinState.isSpinning, localSpinState.resultReceived, localSpinState.targetAngle, stopWheelSound, network, onMonadSpinComplete]);
 
   // Don't render result message while spinning (same as Base)
 
@@ -210,6 +249,30 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
       color: '#27AE60'
     };
   };
+
+  // Play win/lose sound when result is shown (only once when spinning stops)
+  React.useEffect(() => {
+    if (!localSpinState.isSpinning && localSpinState.prizeIndex !== undefined && localSpinState.resultReceived) {
+      const safePrizeIndex = localSpinState.prizeIndex % PRIZES.length;
+      const prize = PRIZES[safePrizeIndex];
+      
+      if (prize && prize.name === 'Try Again') {
+        playLoseSound();
+      } else if (prize) {
+        playWinSound();
+      }
+    }
+  }, [localSpinState.isSpinning, localSpinState.resultReceived, localSpinState.prizeIndex, PRIZES, playWinSound, playLoseSound]);
+
+  // Stop wheel sound when Monad result is received (before final animation)
+  React.useEffect(() => {
+    if (network === 'monad' && localSpinState.resultReceived && localSpinState.isSpinning) {
+      // Stop wheel sound when result is received but wheel is still spinning (final animation)
+      setTimeout(() => {
+        stopWheelSound();
+      }, 1000); // Stop after 1 second of final animation
+    }
+  }, [localSpinState.resultReceived, localSpinState.isSpinning, network, stopWheelSound]);
 
   const resultMessage = getResultMessage();
 

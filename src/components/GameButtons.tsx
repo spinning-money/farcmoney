@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatEther } from 'viem';
+import { useWheelSound } from '../hooks/useWheelSound';
 
 interface GameButtonsProps {
   isConnected: boolean;
@@ -30,6 +31,8 @@ const GameButtons: React.FC<GameButtonsProps> = ({
   onClaim,
   spinState
 }) => {
+  const { playButtonClick } = useWheelSound();
+  
   const formatAmount = (amount: string) => {
     if (!amount || amount === '0') return `0.0000 ${network === 'monad' ? 'MON' : 'ETH'}`;
     try {
@@ -44,7 +47,10 @@ const GameButtons: React.FC<GameButtonsProps> = ({
     return (
       <div className="w-full flex flex-col items-center gap-4 px-4">
         <button
-          onClick={onConnect}
+          onClick={() => {
+            playButtonClick();
+            onConnect();
+          }}
           disabled={isLoading}
           className="w-full max-w-sm bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 text-white font-bold py-5 px-8 rounded-2xl shadow-lg text-lg active:scale-95 transition-all duration-200"
         >
@@ -61,7 +67,10 @@ const GameButtons: React.FC<GameButtonsProps> = ({
     <div className="w-full flex flex-col items-center gap-4 px-4">
       {/* Büyük Spin Butonu */}
       <button
-        onClick={onSpin}
+        onClick={() => {
+          playButtonClick();
+          onSpin();
+        }}
         disabled={!canSpin || isLoading}
         className="w-full max-w-sm bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-6 px-8 rounded-2xl shadow-lg text-xl active:scale-95 transition-all duration-200 flex flex-col items-center gap-1"
       >
@@ -97,7 +106,10 @@ const GameButtons: React.FC<GameButtonsProps> = ({
         </div>
 
         <button
-          onClick={onClaim}
+          onClick={() => {
+            playButtonClick();
+            onClaim();
+          }}
           disabled={isLoading || !canClaim}
           className="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-xl shadow-lg text-lg active:scale-95 transition-all duration-200"
         >
