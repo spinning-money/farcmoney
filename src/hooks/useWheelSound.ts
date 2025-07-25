@@ -12,9 +12,13 @@ export const useWheelSound = () => {
     const userAgent = navigator.userAgent;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
     const isFarcaster = userAgent.includes('Farcaster') || userAgent.includes('farcaster') || window.location.href.includes('farcaster');
+    const isApple = /iPhone|iPad|iPod|Mac/i.test(userAgent);
+    const isAndroid = /Android/i.test(userAgent);
     
     isMobileRef.current = isMobile || isFarcaster;
     console.log('📱 Device type:', isMobileRef.current ? 'Mobile/Farcaster' : 'Desktop');
+    console.log('🍎 Apple device:', isApple);
+    console.log('🤖 Android device:', isAndroid);
     console.log('🔍 User Agent:', userAgent);
     console.log('🔗 URL:', window.location.href);
     
@@ -97,6 +101,35 @@ export const useWheelSound = () => {
     }
   }, []);
 
+  // Force unlock audio for Apple devices
+  const forceUnlockAppleAudio = useCallback(() => {
+    const userAgent = navigator.userAgent;
+    const isApple = /iPhone|iPad|iPod|Mac/i.test(userAgent);
+    
+    if (isApple) {
+      console.log('🍎 Force unlocking Apple audio...');
+      
+      // Create multiple silent audio elements to force unlock
+      for (let i = 0; i < 3; i++) {
+        const audio = new Audio();
+        audio.volume = 0;
+        audio.play().catch(() => {
+          // Ignore errors
+        });
+      }
+      
+      // Try to unlock Web Audio API
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().then(() => {
+          console.log('🍎 Apple audio context unlocked');
+          audioUnlockedRef.current = true;
+        }).catch(() => {
+          console.log('🍎 Apple audio context unlock failed');
+        });
+      }
+    }
+  }, []);
+
   const playWheelSound = useCallback(() => {
     if (!isPlayingRef.current) {
       // For mobile/Farcaster devices, try both haptic feedback and audio
@@ -106,6 +139,9 @@ export const useWheelSound = () => {
         
         // Try to unlock audio context first
         unlockAudio();
+        
+        // Force unlock for Apple devices
+        forceUnlockAppleAudio();
         
         // Create combined haptic and audio feedback
         const createMobileTick = () => {
@@ -127,7 +163,7 @@ export const useWheelSound = () => {
               tickOsc.frequency.setValueAtTime(300, tickTime);
               tickOsc.frequency.exponentialRampToValueAtTime(150, tickTime + 0.1);
               
-              tickGain.gain.setValueAtTime(0.1, tickTime);
+              tickGain.gain.setValueAtTime(0.3, tickTime);
               tickGain.gain.exponentialRampToValueAtTime(0.001, tickTime + 0.1);
               
               tickOsc.connect(tickGain);
@@ -250,6 +286,9 @@ export const useWheelSound = () => {
         // Try to unlock audio context first
         unlockAudio();
         
+        // Force unlock for Apple devices
+        forceUnlockAppleAudio();
+        
         // 1. Haptic feedback
         if ('vibrate' in navigator) {
           navigator.vibrate(20); // Short vibration for button click
@@ -265,7 +304,7 @@ export const useWheelSound = () => {
           clickOsc.frequency.setValueAtTime(400, clickTime);
           clickOsc.frequency.exponentialRampToValueAtTime(200, clickTime + 0.1);
           
-          clickGain.gain.setValueAtTime(0.08, clickTime);
+          clickGain.gain.setValueAtTime(0.25, clickTime);
           clickGain.gain.exponentialRampToValueAtTime(0.001, clickTime + 0.1);
           
           clickOsc.connect(clickGain);
@@ -339,6 +378,9 @@ export const useWheelSound = () => {
         // Try to unlock audio context first
         unlockAudio();
         
+        // Force unlock for Apple devices
+        forceUnlockAppleAudio();
+        
         // 1. Haptic feedback
         if ('vibrate' in navigator) {
           navigator.vibrate([50, 100, 50, 100, 50]); // Success vibration pattern
@@ -357,7 +399,7 @@ export const useWheelSound = () => {
             winOsc.type = 'sine';
             winOsc.frequency.setValueAtTime(freq, winTime);
             
-            winGain.gain.setValueAtTime(0.04, winTime);
+            winGain.gain.setValueAtTime(0.2, winTime);
             winGain.gain.exponentialRampToValueAtTime(0.001, winTime + 0.3);
             
             winOsc.connect(winGain);
@@ -434,6 +476,9 @@ export const useWheelSound = () => {
         // Try to unlock audio context first
         unlockAudio();
         
+        // Force unlock for Apple devices
+        forceUnlockAppleAudio();
+        
         // 1. Haptic feedback
         if ('vibrate' in navigator) {
           navigator.vibrate([200, 100, 200]); // Failure vibration pattern
@@ -452,7 +497,7 @@ export const useWheelSound = () => {
             loseOsc.type = 'triangle';
             loseOsc.frequency.setValueAtTime(freq, loseTime);
             
-            loseGain.gain.setValueAtTime(0.03, loseTime);
+            loseGain.gain.setValueAtTime(0.15, loseTime);
             loseGain.gain.exponentialRampToValueAtTime(0.001, loseTime + 0.4);
             
             loseOsc.connect(loseGain);
