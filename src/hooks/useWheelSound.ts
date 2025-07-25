@@ -6,10 +6,15 @@ export const useWheelSound = () => {
   const isPlayingRef = useRef(false);
   const isMobileRef = useRef(false);
   
-  // Check if device is mobile
+  // Check if device is mobile or Farcaster mini app
   useEffect(() => {
-    isMobileRef.current = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    console.log('📱 Device type:', isMobileRef.current ? 'Mobile' : 'Desktop');
+    const userAgent = navigator.userAgent;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+    const isFarcaster = userAgent.includes('Farcaster') || userAgent.includes('farcaster');
+    
+    isMobileRef.current = isMobile || isFarcaster;
+    console.log('📱 Device type:', isMobileRef.current ? 'Mobile/Farcaster' : 'Desktop');
+    console.log('🔍 User Agent:', userAgent);
   }, []);
 
   // Initialize audio context
@@ -30,45 +35,50 @@ export const useWheelSound = () => {
 
   const playWheelSound = useCallback(() => {
     if (!isPlayingRef.current) {
-      // For mobile devices, use simpler approach
+      // For mobile/Farcaster devices, use ultra-simple approach
       if (isMobileRef.current) {
-        console.log('📱 Using mobile sound system');
+        console.log('📱 Using Farcaster mini app sound system');
         isPlayingRef.current = true;
         
-        // Create simple mobile wheel sound
+        // Create ultra-simple mobile wheel sound
         const createMobileTick = () => {
           if (!isPlayingRef.current) return;
           
           try {
-            // Create a simple beep sound for mobile
+            // Use HTML5 Audio for maximum compatibility
             const audio = new Audio();
-            audio.volume = 0.1;
             
-            // Generate a simple tone using Web Audio API if available
-            if (window.AudioContext || (window as any).webkitAudioContext) {
-              const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-              const oscillator = audioContext.createOscillator();
-              const gainNode = audioContext.createGain();
-              
-              oscillator.connect(gainNode);
-              gainNode.connect(audioContext.destination);
-              
-              oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
-              oscillator.frequency.exponentialRampToValueAtTime(150, audioContext.currentTime + 0.1);
-              
-              gainNode.gain.setValueAtTime(0.02, audioContext.currentTime);
-              gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
-              
-              oscillator.start(audioContext.currentTime);
-              oscillator.stop(audioContext.currentTime + 0.1);
+            // Create a simple data URL for a beep sound
+            const sampleRate = 44100;
+            const duration = 0.1; // 100ms
+            const frequency = 300;
+            const samples = Math.floor(sampleRate * duration);
+            const audioBuffer = new ArrayBuffer(samples * 2);
+            const view = new DataView(audioBuffer);
+            
+            for (let i = 0; i < samples; i++) {
+              const value = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.1;
+              view.setInt16(i * 2, value * 32767, true);
             }
+            
+            const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            
+            audio.src = url;
+            audio.volume = 0.05; // Very low volume
+            audio.play().catch(error => {
+              console.warn('⚠️ Mobile audio play failed:', error);
+            });
+            
+            // Clean up URL after playing
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
           } catch (error) {
-            console.warn('⚠️ Mobile sound failed:', error);
+            console.warn('⚠️ Mobile sound generation failed:', error);
           }
         };
         
         createMobileTick();
-        intervalRef.current = setInterval(createMobileTick, 200);
+        intervalRef.current = setInterval(createMobileTick, 300); // Slower for mobile
         return;
       }
       
@@ -163,29 +173,38 @@ export const useWheelSound = () => {
   }, []);
 
   const playButtonClick = useCallback(() => {
-    // For mobile devices, use simpler approach
+    // For mobile/Farcaster devices, use ultra-simple approach
     if (isMobileRef.current) {
       try {
-        // Create simple mobile button sound
-        if (window.AudioContext || (window as any).webkitAudioContext) {
-          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-          const oscillator = audioContext.createOscillator();
-          const gainNode = audioContext.createGain();
-          
-          oscillator.connect(gainNode);
-          gainNode.connect(audioContext.destination);
-          
-          oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
-          oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
-          
-          gainNode.gain.setValueAtTime(0.01, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
-          
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 0.1);
+        // Use HTML5 Audio for maximum compatibility
+        const audio = new Audio();
+        
+        // Create a simple data URL for a button click sound
+        const sampleRate = 44100;
+        const duration = 0.05; // 50ms
+        const frequency = 400;
+        const samples = Math.floor(sampleRate * duration);
+        const audioBuffer = new ArrayBuffer(samples * 2);
+        const view = new DataView(audioBuffer);
+        
+        for (let i = 0; i < samples; i++) {
+          const value = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.05;
+          view.setInt16(i * 2, value * 32767, true);
         }
+        
+        const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        
+        audio.src = url;
+        audio.volume = 0.03; // Very low volume
+        audio.play().catch(error => {
+          console.warn('⚠️ Mobile button audio play failed:', error);
+        });
+        
+        // Clean up URL after playing
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
       } catch (error) {
-        console.warn('⚠️ Mobile button sound failed:', error);
+        console.warn('⚠️ Mobile button sound generation failed:', error);
       }
       return;
     }
@@ -236,7 +255,46 @@ export const useWheelSound = () => {
   }, [initAudio]);
 
   const playWinSound = useCallback(() => {
-    // Mobile-friendly audio initialization
+    // For mobile/Farcaster devices, use ultra-simple approach
+    if (isMobileRef.current) {
+      try {
+        // Use HTML5 Audio for maximum compatibility
+        const audio = new Audio();
+        
+        // Create a simple ascending tone for win sound
+        const sampleRate = 44100;
+        const duration = 0.3; // 300ms
+        const startFreq = 400;
+        const endFreq = 700;
+        const samples = Math.floor(sampleRate * duration);
+        const audioBuffer = new ArrayBuffer(samples * 2);
+        const view = new DataView(audioBuffer);
+        
+        for (let i = 0; i < samples; i++) {
+          const progress = i / samples;
+          const frequency = startFreq + (endFreq - startFreq) * progress;
+          const value = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.03;
+          view.setInt16(i * 2, value * 32767, true);
+        }
+        
+        const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        
+        audio.src = url;
+        audio.volume = 0.02; // Very low volume
+        audio.play().catch(error => {
+          console.warn('⚠️ Mobile win audio play failed:', error);
+        });
+        
+        // Clean up URL after playing
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (error) {
+        console.warn('⚠️ Mobile win sound generation failed:', error);
+      }
+      return;
+    }
+    
+    // Desktop audio initialization
     if (!initAudio()) {
       console.warn('⚠️ Audio not supported on this device');
       return;
@@ -284,7 +342,46 @@ export const useWheelSound = () => {
   }, [initAudio]);
 
   const playLoseSound = useCallback(() => {
-    // Mobile-friendly audio initialization
+    // For mobile/Farcaster devices, use ultra-simple approach
+    if (isMobileRef.current) {
+      try {
+        // Use HTML5 Audio for maximum compatibility
+        const audio = new Audio();
+        
+        // Create a simple descending tone for lose sound
+        const sampleRate = 44100;
+        const duration = 0.4; // 400ms
+        const startFreq = 600;
+        const endFreq = 300;
+        const samples = Math.floor(sampleRate * duration);
+        const audioBuffer = new ArrayBuffer(samples * 2);
+        const view = new DataView(audioBuffer);
+        
+        for (let i = 0; i < samples; i++) {
+          const progress = i / samples;
+          const frequency = startFreq + (endFreq - startFreq) * progress;
+          const value = Math.sin(2 * Math.PI * frequency * i / sampleRate) * 0.02;
+          view.setInt16(i * 2, value * 32767, true);
+        }
+        
+        const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+        const url = URL.createObjectURL(blob);
+        
+        audio.src = url;
+        audio.volume = 0.015; // Very low volume
+        audio.play().catch(error => {
+          console.warn('⚠️ Mobile lose audio play failed:', error);
+        });
+        
+        // Clean up URL after playing
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } catch (error) {
+        console.warn('⚠️ Mobile lose sound generation failed:', error);
+      }
+      return;
+    }
+    
+    // Desktop audio initialization
     if (!initAudio()) {
       console.warn('⚠️ Audio not supported on this device');
       return;
