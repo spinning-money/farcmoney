@@ -163,7 +163,7 @@ export const useWheelSound = () => {
               tickOsc.frequency.setValueAtTime(300, tickTime);
               tickOsc.frequency.exponentialRampToValueAtTime(150, tickTime + 0.1);
               
-              tickGain.gain.setValueAtTime(0.3, tickTime);
+              tickGain.gain.setValueAtTime(1.5, tickTime);
               tickGain.gain.exponentialRampToValueAtTime(0.001, tickTime + 0.1);
               
               tickOsc.connect(tickGain);
@@ -304,7 +304,7 @@ export const useWheelSound = () => {
           clickOsc.frequency.setValueAtTime(400, clickTime);
           clickOsc.frequency.exponentialRampToValueAtTime(200, clickTime + 0.1);
           
-          clickGain.gain.setValueAtTime(0.25, clickTime);
+          clickGain.gain.setValueAtTime(1.25, clickTime);
           clickGain.gain.exponentialRampToValueAtTime(0.001, clickTime + 0.1);
           
           clickOsc.connect(clickGain);
@@ -399,7 +399,7 @@ export const useWheelSound = () => {
             winOsc.type = 'sine';
             winOsc.frequency.setValueAtTime(freq, winTime);
             
-            winGain.gain.setValueAtTime(0.2, winTime);
+            winGain.gain.setValueAtTime(1.0, winTime);
             winGain.gain.exponentialRampToValueAtTime(0.001, winTime + 0.3);
             
             winOsc.connect(winGain);
@@ -497,7 +497,7 @@ export const useWheelSound = () => {
             loseOsc.type = 'triangle';
             loseOsc.frequency.setValueAtTime(freq, loseTime);
             
-            loseGain.gain.setValueAtTime(0.15, loseTime);
+            loseGain.gain.setValueAtTime(0.75, loseTime);
             loseGain.gain.exponentialRampToValueAtTime(0.001, loseTime + 0.4);
             
             loseOsc.connect(loseGain);
