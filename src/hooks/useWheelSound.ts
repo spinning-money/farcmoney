@@ -110,7 +110,7 @@ export const useWheelSound = () => {
       console.log('🍎 Force unlocking Apple audio...');
       
       // Create multiple silent audio elements to force unlock
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 5; i++) {
         const audio = new Audio();
         audio.volume = 0;
         audio.play().catch(() => {
@@ -127,6 +127,23 @@ export const useWheelSound = () => {
           console.log('🍎 Apple audio context unlock failed');
         });
       }
+      
+      // Additional iOS-specific unlock attempts
+      if (audioContextRef.current) {
+        // Try to create and play a test sound
+        try {
+          const testOsc = audioContextRef.current.createOscillator();
+          const testGain = audioContextRef.current.createGain();
+          testGain.gain.setValueAtTime(0, audioContextRef.current.currentTime);
+          testOsc.connect(testGain);
+          testGain.connect(audioContextRef.current.destination);
+          testOsc.start();
+          testOsc.stop(audioContextRef.current.currentTime + 0.001);
+          console.log('🍎 iOS test sound created successfully');
+        } catch (error) {
+          console.log('🍎 iOS test sound failed:', error);
+        }
+      }
     }
   }, []);
 
@@ -142,6 +159,30 @@ export const useWheelSound = () => {
         
         // Force unlock for Apple devices
         forceUnlockAppleAudio();
+        
+        // iOS-specific aggressive unlock
+        const userAgent = navigator.userAgent;
+        const isApple = /iPhone|iPad|iPod|Mac/i.test(userAgent);
+        
+        if (isApple) {
+          console.log('🍎 iOS aggressive audio unlock...');
+          
+          // Try multiple unlock methods
+          setTimeout(() => {
+            unlockAudio();
+            forceUnlockAppleAudio();
+          }, 100);
+          
+          setTimeout(() => {
+            unlockAudio();
+            forceUnlockAppleAudio();
+          }, 500);
+          
+          setTimeout(() => {
+            unlockAudio();
+            forceUnlockAppleAudio();
+          }, 1000);
+        }
         
         // Create combined haptic and audio feedback
         const createMobileTick = () => {
@@ -173,7 +214,37 @@ export const useWheelSound = () => {
               tickOsc.stop(tickTime + 0.1);
             }
             
-            // 3. Fallback: silent audio to keep context alive
+            // 3. iOS-specific fallback: Try HTML5 Audio with data URL
+            const userAgent = navigator.userAgent;
+            const isApple = /iPhone|iPad|iPod|Mac/i.test(userAgent);
+            
+            if (isApple) {
+              try {
+                // Create a simple beep sound using data URL
+                const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(150, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+                
+                console.log('🍎 iOS fallback sound played');
+              } catch (error) {
+                console.log('🍎 iOS fallback sound failed:', error);
+              }
+            }
+            
+            // 4. Fallback: silent audio to keep context alive
             const audio = new Audio();
             audio.volume = 0;
             audio.play().catch(() => {
