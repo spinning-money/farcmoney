@@ -138,8 +138,8 @@ export const useMonad = () => {
       let result;
       
       if (isFarcaster) {
-        // Use simpler parameters for Farcaster
-        console.log('🔄 Using Farcaster-compatible transaction parameters...');
+        // Use minimal parameters for Farcaster to avoid serialization issues
+        console.log('🔄 Using minimal Farcaster-compatible transaction parameters...');
         result = await writeContractAsync({
           address: MONAD_CONTRACT_ADDRESS,
           abi: SpinAndWinMonadABI,
@@ -232,11 +232,11 @@ export const useMonad = () => {
       console.error('❌ Monad spin transaction failed:', error);
       
       // Special handling for Farcaster mini app errors
-      if (error instanceof Error && error.message.includes('serialize')) {
-        console.log('🔄 Farcaster serialization error detected, retrying with simpler parameters...');
+      if (error instanceof Error && (error.message.includes('serialize') || error.message.includes('postMessage'))) {
+        console.log('🔄 Farcaster serialization/postMessage error detected, trying alternative approach...');
         
         try {
-          // Retry with minimal parameters
+          // Try with even more minimal parameters
           const retryResult = await writeContractAsync({
             address: MONAD_CONTRACT_ADDRESS,
             abi: SpinAndWinMonadABI,
@@ -244,11 +244,26 @@ export const useMonad = () => {
             value: BigInt("50000000000000000"), // 0.05 MON in wei
           });
           
-          console.log('✅ Retry successful:', retryResult);
+          console.log('✅ Alternative approach successful:', retryResult);
           return retryResult;
         } catch (retryError) {
-          console.error('❌ Retry also failed:', retryError);
-          throw retryError;
+          console.error('❌ Alternative approach also failed:', retryError);
+          
+          // Final fallback - try with just the basics
+          try {
+            console.log('🔄 Trying final fallback with basic parameters...');
+            const fallbackResult = await writeContractAsync({
+              address: MONAD_CONTRACT_ADDRESS,
+              abi: SpinAndWinMonadABI,
+              functionName: 'spin',
+            });
+            
+            console.log('✅ Fallback successful:', fallbackResult);
+            return fallbackResult;
+          } catch (fallbackError) {
+            console.error('❌ All approaches failed:', fallbackError);
+            throw fallbackError;
+          }
         }
       }
       
