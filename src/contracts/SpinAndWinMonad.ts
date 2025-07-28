@@ -566,4 +566,4 @@ export const SpinAndWinMonadABI = [
 ];
 
 // Monad testnet contract address
-export const MONAD_CONTRACT_ADDRESS = "0xb60faebe7a047687f081d8fe6379f278d1a4b82a"; 
+export const MONAD_CONTRACT_ADDRESS = "0x1c7a5b4591cb938302f754f4398e584759830d9a"; 
