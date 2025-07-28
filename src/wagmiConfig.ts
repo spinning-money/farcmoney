@@ -27,17 +27,11 @@ const monadTestnet = {
   },
 } as const;
 
-// Check if we're in Farcaster miniapp environment
-const isFarcasterMiniapp = typeof window !== 'undefined' && 
-  (window.location.hostname.includes('farcaster') || 
-   window.location.hostname.includes('warpcast') ||
-   window.navigator.userAgent.includes('Farcaster'));
-
 export const config = createConfig({
   chains: [base, monadTestnet],
   transports: {
     [base.id]: http(),
-    [monadTestnet.id]: isFarcasterMiniapp ? http('https://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA') : webSocket('wss://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA'),
+    [monadTestnet.id]: http('https://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA'),
   },
   connectors: [
     miniAppConnector()

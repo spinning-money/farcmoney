@@ -66,36 +66,33 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
   // Handle Monad spin result - same logic as Base
   useEffect(() => {
     if (network === 'monad' && monadSpinResult && localSpinState.isSpinning && monadSpinning) {
-      console.log('🎯 Monad result received:', { reward: monadSpinResult.reward, prizeIndex: monadSpinResult.prizeIndex });
-      
       const targetAngle = calculateTargetAngle(monadSpinResult.prizeIndex);
       
-      // Don't immediately set resultReceived to true - let it spin more
-      // Just store the target angle and prize index for later
+      // Set target angle and prize index immediately
       setLocalSpinState(prev => ({
         ...prev,
         targetAngle,
         prizeIndex: monadSpinResult.prizeIndex
-        // Don't set resultReceived: true yet
       }));
 
-      // Let it spin for 3 more seconds before showing the result (daha uzun süre)
+      // Let it spin for 1.5 seconds more before showing the result (kısaltıldı)
       setTimeout(() => {
         setLocalSpinState(prev => ({
           ...prev,
           resultReceived: true
         }));
         
-        // Then stop after final animation
+        // Then stop after final animation (kısaltıldı) - ses ve çark aynı anda durmalı
         setTimeout(() => {
           setLocalSpinState(prev => ({
             ...prev,
             isSpinning: false
           }));
-          stopWheelSound(); // Stop wheel sound immediately when animation completes
+          // Ses ve çark aynı anda durmalı
+          stopWheelSound();
           onMonadSpinComplete?.();
-        }, 3000); // 3 seconds for final animation (daha uzun)
-      }, 3000); // 3 seconds of extra spinning after result (daha uzun)
+        }, 1500); // 1.5 seconds for final animation (kısaltıldı)
+      }, 1500); // 1.5 seconds of extra spinning after result (kısaltıldı)
     }
   }, [monadSpinResult, network, segmentAngle, onMonadSpinComplete, stopWheelSound, monadSpinning]);
   
@@ -112,6 +109,7 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
     
     // Stop wheel sound when Base network stops spinning (including cancellation)
     if (network === 'base' && !spinState.isSpinning && localSpinState.isSpinning) {
+      // Ses ve çark aynı anda durmalı
       stopWheelSound();
       // Notify parent about spin cancellation
       onSpinCancel?.();
@@ -162,7 +160,6 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
   // Start spinning for Monad (same as Base startSpin)
   useEffect(() => {
     if (network === 'monad' && monadSpinning && !localSpinState.isSpinning) {
-      console.log('🎰 Starting Monad spin animation...');
       setLocalSpinState(prev => ({
         ...prev,
         isSpinning: true,
@@ -172,19 +169,19 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
       // Start wheel sound
       playWheelSound();
       
-      // Set a timeout to force stop if no result received within 30 seconds
+      // Set a timeout to force stop if no result received within 15 seconds (kısaltıldı)
       const timeoutId = setTimeout(() => {
         if (localSpinState.isSpinning && !localSpinState.resultReceived) {
-          console.log('⏰ Monad spin timeout - forcing stop');
           setLocalSpinState(prev => ({
             ...prev,
             isSpinning: false,
             resultReceived: true
           }));
+          // Ses ve çark aynı anda durmalı
           stopWheelSound();
           onMonadSpinComplete?.();
         }
-      }, 30000); // 30 seconds timeout
+      }, 15000); // 15 seconds timeout (kısaltıldı)
       
       // Clean up timeout when component unmounts or state changes
       return () => clearTimeout(timeoutId);
@@ -250,8 +247,8 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
               isSpinning: false 
             }));
             
-            // Stop wheel sound immediately when animation completes
-            stopWheelSound();
+            // Stop wheel sound only when animation is completely finished
+            // Don't stop sound here - let the parent handle it
             
             // Notify parent that Monad spin is complete
             if (network === 'monad') {
@@ -319,12 +316,10 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
   // Stop wheel sound when Monad result is received (before final animation)
   React.useEffect(() => {
     if (network === 'monad' && localSpinState.resultReceived && localSpinState.isSpinning) {
-      // Stop wheel sound when result is received but wheel is still spinning (final animation)
-      setTimeout(() => {
-        stopWheelSound();
-      }, 1000); // Stop after 1 second of final animation
+      // Don't stop wheel sound here - let it continue until animation completes
+      // The sound will be stopped when the animation finishes
     }
-  }, [localSpinState.resultReceived, localSpinState.isSpinning, network, stopWheelSound]);
+  }, [network, localSpinState.resultReceived, localSpinState.isSpinning]);
 
   const resultMessage = getResultMessage();
 

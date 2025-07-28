@@ -66,7 +66,6 @@ function MainApp() {
   // Update Monad spin state when result is received
   useEffect(() => {
     if (activeNetwork === 'monad' && monadEvents.latestSpinResult && monadSpinning) {
-      console.log('🎯 Updating Monad spin state with result:', monadEvents.latestSpinResult);
       setMonadSpinState(prev => ({
         ...prev,
         prizeIndex: monadEvents.latestSpinResult!.prizeIndex,
@@ -78,28 +77,25 @@ function MainApp() {
       
       // Çarkı durdur ve spinning state'i false yap - sadece onchain sonuç geldiğinde
       setTimeout(() => {
-        console.log('🎯 Monad spin completed, setting monadSpinning to false');
         setMonadSpinning(false);
         setMonadSpinState(prev => ({
           ...prev,
           isSpinning: false
         }));
         
-        // Show result for 5 seconds
+        // Show result for 3 seconds (kısaltıldı)
         setShowResult(true);
         
-        // After 5 seconds, reset everything and enable button
+        // After 3 seconds, reset everything and enable button (kısaltıldı)
         setTimeout(() => {
-          console.log('🔄 Resetting result display and enabling button');
           setShowResult(false);
           setIsButtonDisabled(false);
           monadEvents.clearLatestSpinResult();
-        }, 5000); // 5 seconds result display
-      }, 6000); // 6 saniye sonra durdur (3 saniye extra spin + 3 saniye final animation)
+        }, 3000); // 3 seconds result display (kısaltıldı)
+      }, 3000); // 3 saniye sonra durdur (1.5 saniye extra spin + 1.5 saniye final animation) (kısaltıldı)
       
       // Refresh Monad contract data when result is received
       if (monadHook.refreshData) {
-        console.log('🔄 Refreshing Monad data after spin result...');
         setTimeout(() => {
           monadHook.refreshData();
         }, 2000); // 2 saniye sonra refresh et (transaction'ın onaylanması için)
@@ -107,12 +103,12 @@ function MainApp() {
     }
   }, [monadEvents.latestSpinResult, activeNetwork, monadHook.refreshData, monadSpinning]);
   
-  // Force stop Monad spin if no result received within 30 seconds
+  // Force stop Monad spin if no result received within 20 seconds (kısaltıldı)
   useEffect(() => {
     if (activeNetwork === 'monad' && monadSpinning) {
       // Detect platform for different timeout values
       const isAndroid = /Android/i.test(navigator.userAgent);
-      const timeoutDuration = isAndroid ? 45000 : 30000; // 45s for Android, 30s for others
+      const timeoutDuration = isAndroid ? 25000 : 20000; // 25s for Android, 20s for others (kısaltıldı)
       
       const timeoutId = setTimeout(() => {
         if (monadSpinning && !monadEvents.latestSpinResult) {
@@ -134,7 +130,6 @@ function MainApp() {
   // Handle transaction success/failure for Monad
   useEffect(() => {
     if (activeNetwork === 'monad' && monadEvents.latestSpinResult) {
-      console.log('🎯 Monad transaction confirmed, clearing timeout');
       // Transaction confirmed, no need for timeout
     }
   }, [activeNetwork, monadEvents.latestSpinResult]);
@@ -153,11 +148,8 @@ function MainApp() {
   
   // Create enhanced spin function
   const enhancedSpin = async () => {
-    console.log(`🎯 Enhanced spin called for: ${activeNetwork}`);
-    
     if (activeNetwork === 'base') {
       // Base network - use Base state
-      console.log('🎯 Base spin başlatılıyor...');
       setBaseSpinState({
         isSpinning: false,
         targetAngle: 0,
@@ -180,7 +172,6 @@ function MainApp() {
       }
     } else {
       // Monad network - use Monad state
-      console.log('🎯 Monad spin başlatılıyor...');
       
       // Aggressively clear previous result before starting new spin
       monadEvents.clearLatestSpinResult();
@@ -193,39 +184,20 @@ function MainApp() {
         resultReceived: false,
         currentRotation: 0
       });
+      
       setMonadSpinning(true);
-      console.log('🎯 monadSpinning set to true');
-      
-      // Force clear any previous result multiple times to ensure it's cleared
-      setTimeout(() => {
-        monadEvents.clearLatestSpinResult();
-        console.log('🧹 First clear attempt');
-      }, 50);
-      
-      setTimeout(() => {
-        monadEvents.clearLatestSpinResult();
-        console.log('🧹 Second clear attempt');
-      }, 150);
-      
-      setTimeout(() => {
-        monadEvents.clearLatestSpinResult();
-        console.log('🧹 Third clear attempt');
-      }, 300);
       
       try {
         await spin();
         console.log('✅ Monad spin transaction sent successfully');
-        // Çark durmaya devam etsin, onchain sonuç gelene kadar
-        // setMonadSpinning(false); // Bu satırı kaldır
-        // setMonadSpinState(prev => ({ ...prev, isSpinning: false })); // Bu satırı kaldır
       } catch (error) {
         console.error('❌ Monad spin transaction failed:', error);
         setMonadSpinning(false);
         setMonadSpinState(prev => ({
           ...prev,
-          isSpinning: false
+          isSpinning: false,
+          resultReceived: false
         }));
-        setIsButtonDisabled(false); // Re-enable button on error
       }
     }
   };
