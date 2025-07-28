@@ -238,7 +238,12 @@ export const useMonadEvents = () => {
 
   // Latest spin result'ı temizleme fonksiyonu
   const clearLatestSpinResult = useCallback(() => {
+    console.log('🧹 Clearing latest spin result...');
     setLatestSpinResult(null);
+    // Force clear after a short delay to ensure it's cleared
+    setTimeout(() => {
+      setLatestSpinResult(null);
+    }, 50);
   }, []);
 
   return {

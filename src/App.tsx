@@ -61,7 +61,7 @@ function MainApp() {
   
   // Update Monad spin state when result is received
   useEffect(() => {
-    if (activeNetwork === 'monad' && monadEvents.latestSpinResult) {
+    if (activeNetwork === 'monad' && monadEvents.latestSpinResult && monadSpinning) {
       console.log('🎯 Updating Monad spin state with result:', monadEvents.latestSpinResult);
       setMonadSpinState(prev => ({
         ...prev,
@@ -71,6 +71,7 @@ function MainApp() {
       
       // Çarkı durdur ve spinning state'i false yap
       setTimeout(() => {
+        console.log('🎯 Monad spin completed, setting monadSpinning to false');
         setMonadSpinning(false);
         setMonadSpinState(prev => ({
           ...prev,
@@ -86,7 +87,7 @@ function MainApp() {
         }, 2000); // 2 saniye sonra refresh et (transaction'ın onaylanması için)
       }
     }
-  }, [monadEvents.latestSpinResult, activeNetwork, monadHook.refreshData]);
+  }, [monadEvents.latestSpinResult, activeNetwork, monadHook.refreshData, monadSpinning]);
   
   // Check if wallet is on correct network
   const isOnCorrectNetwork = () => {
@@ -132,6 +133,8 @@ function MainApp() {
       console.log('🎯 Monad spin başlatılıyor...');
       // Clear previous result before starting new spin
       monadEvents.clearLatestSpinResult();
+      
+      // Reset Monad spin state completely
       setMonadSpinState({
         isSpinning: true,
         targetAngle: 0,
@@ -141,6 +144,11 @@ function MainApp() {
       });
       setMonadSpinning(true);
       console.log('🎯 monadSpinning set to true');
+      
+      // Force clear any previous result immediately
+      setTimeout(() => {
+        monadEvents.clearLatestSpinResult();
+      }, 100);
       
       try {
         await spin();
