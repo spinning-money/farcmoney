@@ -92,11 +92,12 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
             ...prev,
             isSpinning: false
           }));
+          stopWheelSound(); // Stop wheel sound immediately when animation completes
           onMonadSpinComplete?.();
         }, 2000); // 2 seconds for final animation
       }, 2000); // 2 seconds of extra spinning after result
     }
-  }, [monadSpinResult, network, segmentAngle, onMonadSpinComplete]);
+  }, [monadSpinResult, network, segmentAngle, onMonadSpinComplete, stopWheelSound]);
   
 
 
@@ -136,18 +137,35 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
       }));
       // Start wheel sound
       playWheelSound();
+      
+      // Set a timeout to force stop if no result received within 30 seconds
+      const timeoutId = setTimeout(() => {
+        if (localSpinState.isSpinning && !localSpinState.resultReceived) {
+          console.log('⏰ Monad spin timeout - forcing stop');
+          setLocalSpinState(prev => ({
+            ...prev,
+            isSpinning: false,
+            resultReceived: true
+          }));
+          stopWheelSound();
+          onMonadSpinComplete?.();
+        }
+      }, 30000); // 30 seconds timeout
+      
+      // Clean up timeout when component unmounts or state changes
+      return () => clearTimeout(timeoutId);
     }
     
-      // Stop sound when Monad spinning stops
-  if (network === 'monad' && !monadSpinning && localSpinState.isSpinning) {
-    stopWheelSound();
-  }
-  
-  // Stop sound when Base spinning stops
-  if (network === 'base' && !spinState.isSpinning && localSpinState.isSpinning) {
-    stopWheelSound();
-  }
-  }, [network, monadSpinning, localSpinState.isSpinning, playWheelSound, stopWheelSound]);
+    // Stop sound when Monad spinning stops
+    if (network === 'monad' && !monadSpinning && localSpinState.isSpinning) {
+      stopWheelSound();
+    }
+    
+    // Stop sound when Base spinning stops
+    if (network === 'base' && !spinState.isSpinning && localSpinState.isSpinning) {
+      stopWheelSound();
+    }
+  }, [network, monadSpinning, localSpinState.isSpinning, localSpinState.resultReceived, playWheelSound, stopWheelSound, onMonadSpinComplete]);
 
   // Pulsing animation for winning segment
   useEffect(() => {

@@ -43,15 +43,18 @@ export const useMonadEvents = () => {
     if (!address) return;
 
     let ws: WebSocket | null = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
     
     const connectWebSocket = () => {
       try {
-        console.log('🚀 Monad WebSocket bağlantısı kuruluyor...');
+        console.log('🚀 Monad WebSocket bağlantısı kuruluyor... (Attempt:', reconnectAttempts + 1, ')');
         ws = new WebSocket('wss://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA');
         
         ws.onopen = () => {
           console.log('✅ Monad WebSocket bağlantısı kuruldu');
           setIsListening(true);
+          reconnectAttempts = 0; // Reset reconnect attempts on successful connection
           
           // SpinResult event'ini dinle
           const subscribeMessage = {
@@ -120,13 +123,19 @@ export const useMonadEvents = () => {
           console.log('🔌 WebSocket bağlantısı kapandı');
           setIsListening(false);
           
-          // 5 saniye sonra yeniden bağlanmayı dene
-          setTimeout(() => {
-            if (address) {
-              console.log('🔄 WebSocket yeniden bağlanmaya çalışılıyor...');
+          // Exponential backoff ile yeniden bağlanmayı dene
+          if (reconnectAttempts < maxReconnectAttempts && address) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000); // Max 10 seconds
+            reconnectAttempts++;
+            console.log(`🔄 WebSocket yeniden bağlanmaya çalışılıyor... (${reconnectAttempts}/${maxReconnectAttempts}) - ${delay}ms sonra`);
+            setTimeout(() => {
               connectWebSocket();
-            }
-          }, 5000);
+            }, delay);
+          } else if (reconnectAttempts >= maxReconnectAttempts) {
+            console.log('⚠️ WebSocket yeniden bağlanma denemeleri tükendi, fallback polling kullanılacak');
+            // Fallback: Manual polling for events
+            startFallbackPolling();
+          }
         };
         
       } catch (error) {
@@ -144,6 +153,55 @@ export const useMonadEvents = () => {
         setIsListening(false);
       }
     };
+  }, [address]);
+
+  // Fallback polling for events when WebSocket fails
+  const startFallbackPolling = useCallback(() => {
+    console.log('🔄 Fallback polling başlatılıyor...');
+    
+    const pollForEvents = async () => {
+      try {
+        const response = await fetch('https://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'eth_getLogs',
+            params: [{
+              address: MONAD_CONTRACT_ADDRESS.toLowerCase(),
+              topics: ['0x923a28d8c9438f25c933f709149b09e8d419b32b13fe24f5e61ee52c0d1b437a'],
+              fromBlock: 'latest',
+              toBlock: 'latest'
+            }],
+            id: 1
+          })
+        });
+        
+        const data = await response.json();
+        if (data.result && data.result.length > 0) {
+          console.log('🔍 Fallback polling found events:', data.result.length);
+          data.result.forEach((log: any) => {
+            const eventData = decodeSpinResultEvent(log);
+            if (eventData && eventData.player.toLowerCase() === address?.toLowerCase()) {
+              console.log('🎉 Fallback polling found user event:', eventData);
+              setLatestSpinResult(eventData);
+              setRecentEvents(prev => [eventData, ...prev.slice(0, 9)]);
+            }
+          });
+        }
+      } catch (error) {
+        console.error('❌ Fallback polling error:', error);
+      }
+    };
+    
+    // Poll every 3 seconds
+    const interval = setInterval(pollForEvents, 3000);
+    
+    // Clean up after 2 minutes
+    setTimeout(() => {
+      clearInterval(interval);
+      console.log('⏰ Fallback polling stopped');
+    }, 120000);
   }, [address]);
 
   // Event verilerini decode etme fonksiyonu
