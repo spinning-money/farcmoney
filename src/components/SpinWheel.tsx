@@ -79,7 +79,7 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
         // Don't set resultReceived: true yet
       }));
 
-      // Let it spin for 2 more seconds before showing the result
+      // Let it spin for 3 more seconds before showing the result (daha uzun süre)
       setTimeout(() => {
         setLocalSpinState(prev => ({
           ...prev,
@@ -94,8 +94,8 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
           }));
           stopWheelSound(); // Stop wheel sound immediately when animation completes
           onMonadSpinComplete?.();
-        }, 2000); // 2 seconds for final animation
-      }, 2000); // 2 seconds of extra spinning after result
+        }, 3000); // 3 seconds for final animation (daha uzun)
+      }, 3000); // 3 seconds of extra spinning after result (daha uzun)
     }
   }, [monadSpinResult, network, segmentAngle, onMonadSpinComplete, stopWheelSound]);
   

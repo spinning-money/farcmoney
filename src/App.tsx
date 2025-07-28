@@ -69,6 +69,15 @@ function MainApp() {
         resultReceived: true
       }));
       
+      // Çarkı durdur ve spinning state'i false yap
+      setTimeout(() => {
+        setMonadSpinning(false);
+        setMonadSpinState(prev => ({
+          ...prev,
+          isSpinning: false
+        }));
+      }, 6000); // 6 saniye sonra durdur (3 saniye extra spin + 3 saniye final animation)
+      
       // Refresh Monad contract data when result is received
       if (monadHook.refreshData) {
         console.log('🔄 Refreshing Monad data after spin result...');
@@ -136,6 +145,9 @@ function MainApp() {
       try {
         await spin();
         console.log('✅ Monad spin transaction sent successfully');
+        // Çark durmaya devam etsin, onchain sonuç gelene kadar
+        // setMonadSpinning(false); // Bu satırı kaldır
+        // setMonadSpinState(prev => ({ ...prev, isSpinning: false })); // Bu satırı kaldır
       } catch (error) {
         console.error('❌ Monad spin transaction failed:', error);
         setMonadSpinning(false);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// Optimizer settings to match deployment
+// Optimizer settings
 // optimizer: true
 // optimizer_runs: 200
 // evm_version: paris

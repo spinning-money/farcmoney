@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-// Optimizer settings to match deployment
+// Optimizer settings - try different settings
 // optimizer: true
-// optimizer_runs: 200
+// optimizer_runs: 1000
 // evm_version: paris
 
 // OpenZeppelin Contracts (last updated v5.0.0) (security/ReentrancyGuard.sol)
