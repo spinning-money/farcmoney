@@ -69,7 +69,7 @@ function MainApp() {
         resultReceived: true
       }));
       
-      // Çarkı durdur ve spinning state'i false yap
+      // Çarkı durdur ve spinning state'i false yap - sadece onchain sonuç geldiğinde
       setTimeout(() => {
         console.log('🎯 Monad spin completed, setting monadSpinning to false');
         setMonadSpinning(false);
@@ -171,11 +171,11 @@ function MainApp() {
   useEffect(() => {
     const handleWalletPopup = () => {
       if (activeNetwork === 'base' && baseSpinState.isSpinning) {
-        console.log('👁️ Wallet popup detected for Base - pausing spin state');
-        // Don't stop the spin, just pause the sound
+        console.log('👁️ Wallet popup detected for Base - keeping spin running');
+        // Don't stop the spin at all - let it continue until onchain result
       } else if (activeNetwork === 'monad' && monadSpinState.isSpinning) {
-        console.log('👁️ Wallet popup detected for Monad - pausing spin state');
-        // Don't stop the spin, just pause the sound
+        console.log('👁️ Wallet popup detected for Monad - keeping spin running');
+        // Don't stop the spin at all - let it continue until onchain result
       }
     };
 
@@ -185,6 +185,7 @@ function MainApp() {
       }
     };
 
+    // Only log the events, don't interfere with spin state
     document.addEventListener('visibilitychange', handlePageVisibilityChange);
     window.addEventListener('blur', handleWalletPopup);
 
