@@ -130,14 +130,34 @@ export const useMonad = () => {
       console.log('🎯 Prize Pool:', prizePool && typeof prizePool === 'bigint' ? formatEther(prizePool) : '0', 'MON');
       console.log('🎯 Jackpot Pool:', jackpotPool && typeof jackpotPool === 'bigint' ? formatEther(jackpotPool) : '0', 'MON');
       
-      const result = await writeContractAsync({
-        address: MONAD_CONTRACT_ADDRESS,
-        abi: SpinAndWinMonadABI,
-        functionName: 'spin',
-        value: fixedSpinPrice,
-        account: address, // Explicitly set the account
-        gas: BigInt(200000), // Set explicit gas limit
-      });
+      // Check if we're in Farcaster environment
+      const isFarcaster = window.location.hostname.includes('farcaster') || 
+                          window.location.hostname.includes('vercel') ||
+                          navigator.userAgent.includes('Farcaster');
+      
+      let result;
+      
+      if (isFarcaster) {
+        // Use simpler parameters for Farcaster
+        console.log('🔄 Using Farcaster-compatible transaction parameters...');
+        result = await writeContractAsync({
+          address: MONAD_CONTRACT_ADDRESS,
+          abi: SpinAndWinMonadABI,
+          functionName: 'spin',
+          value: fixedSpinPrice,
+        });
+      } else {
+        // Use full parameters for regular web
+        result = await writeContractAsync({
+          address: MONAD_CONTRACT_ADDRESS,
+          abi: SpinAndWinMonadABI,
+          functionName: 'spin',
+          value: fixedSpinPrice,
+          account: address, // Explicitly set the account
+          gas: BigInt(300000), // Increase gas limit for Farcaster compatibility
+          gasPrice: BigInt(1000000000), // Set explicit gas price
+        });
+      }
       
       // Calculate immediate result based on transaction hash (pseudo-random)
       if (result) {
@@ -210,6 +230,28 @@ export const useMonad = () => {
       }
     } catch (error) {
       console.error('❌ Monad spin transaction failed:', error);
+      
+      // Special handling for Farcaster mini app errors
+      if (error instanceof Error && error.message.includes('serialize')) {
+        console.log('🔄 Farcaster serialization error detected, retrying with simpler parameters...');
+        
+        try {
+          // Retry with minimal parameters
+          const retryResult = await writeContractAsync({
+            address: MONAD_CONTRACT_ADDRESS,
+            abi: SpinAndWinMonadABI,
+            functionName: 'spin',
+            value: BigInt("50000000000000000"), // 0.05 MON in wei
+          });
+          
+          console.log('✅ Retry successful:', retryResult);
+          return retryResult;
+        } catch (retryError) {
+          console.error('❌ Retry also failed:', retryError);
+          throw retryError;
+        }
+      }
+      
       throw error;
     } finally {
       setIsLoading(false);
