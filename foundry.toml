@@ -6,6 +6,9 @@ solc_version = "0.8.19"
 optimizer = true
 optimizer_runs = 200
 via_ir = false
+metadata = true
+metadata_hash = "none"  # disable ipfs
+use_literal_content = true # store source code in the json file directly
 
 [rpc_endpoints]
 monad_testnet = "https://testnet-rpc.monad.xyz"
