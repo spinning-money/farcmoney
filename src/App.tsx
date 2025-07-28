@@ -127,6 +127,14 @@ function MainApp() {
     }
   }, [activeNetwork, monadSpinning, monadEvents.latestSpinResult]);
   
+  // Handle transaction success/failure for Monad
+  useEffect(() => {
+    if (activeNetwork === 'monad' && monadEvents.latestSpinResult) {
+      console.log('🎯 Monad transaction confirmed, clearing timeout');
+      // Transaction confirmed, no need for timeout
+    }
+  }, [activeNetwork, monadEvents.latestSpinResult]);
+  
   // Check if wallet is on correct network
   const isOnCorrectNetwork = () => {
     if (activeNetwork === 'base') {
@@ -200,23 +208,6 @@ function MainApp() {
         console.log('🧹 Third clear attempt');
       }, 300);
       
-      // Set a timeout to force stop if no result received within 30 seconds
-      const timeoutId = setTimeout(() => {
-        if (monadSpinning && !monadEvents.latestSpinResult) {
-          console.log('⏰ Monad spin timeout - forcing stop');
-          setMonadSpinning(false);
-          setMonadSpinState(prev => ({
-            ...prev,
-            isSpinning: false,
-            resultReceived: true
-          }));
-          setIsButtonDisabled(false);
-        }
-      }, 30000); // 30 seconds timeout
-      
-      // Clean up timeout when component unmounts or state changes
-      return () => clearTimeout(timeoutId);
-      
       try {
         await spin();
         console.log('✅ Monad spin transaction sent successfully');
@@ -230,6 +221,7 @@ function MainApp() {
           ...prev,
           isSpinning: false
         }));
+        setIsButtonDisabled(false); // Re-enable button on error
       }
     }
   };
