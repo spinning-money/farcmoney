@@ -130,14 +130,38 @@ export const useMonad = () => {
       console.log('🎯 Prize Pool:', prizePool && typeof prizePool === 'bigint' ? formatEther(prizePool) : '0', 'MON');
       console.log('🎯 Jackpot Pool:', jackpotPool && typeof jackpotPool === 'bigint' ? formatEther(jackpotPool) : '0', 'MON');
       
-      // Check if we're in Farcaster environment
+      // Check if we're in Farcaster environment and detect platform
       const isFarcaster = window.location.hostname.includes('farcaster') || 
                           window.location.hostname.includes('vercel') ||
                           navigator.userAgent.includes('Farcaster');
       
+      // Detect Android platform
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      console.log('🔍 Platform detection:', { isFarcaster, isAndroid, isIOS });
+      
       let result;
       
-      if (isFarcaster) {
+      if (isFarcaster && isAndroid) {
+        // Use ultra-minimal parameters for Android Farcaster
+        console.log('🔄 Using ultra-minimal Android Farcaster-compatible transaction parameters...');
+        result = await writeContractAsync({
+          address: MONAD_CONTRACT_ADDRESS,
+          abi: SpinAndWinMonadABI,
+          functionName: 'spin',
+          value: fixedSpinPrice,
+        });
+      } else if (isFarcaster && isIOS) {
+        // Use minimal parameters for iOS Farcaster
+        console.log('🔄 Using minimal iOS Farcaster-compatible transaction parameters...');
+        result = await writeContractAsync({
+          address: MONAD_CONTRACT_ADDRESS,
+          abi: SpinAndWinMonadABI,
+          functionName: 'spin',
+          value: fixedSpinPrice,
+        });
+      } else if (isFarcaster) {
         // Use minimal parameters for Farcaster to avoid serialization issues
         console.log('🔄 Using minimal Farcaster-compatible transaction parameters...');
         result = await writeContractAsync({
@@ -232,20 +256,37 @@ export const useMonad = () => {
       console.error('❌ Monad spin transaction failed:', error);
       
       // Special handling for Farcaster mini app errors
-      if (error instanceof Error && (error.message.includes('serialize') || error.message.includes('postMessage'))) {
-        console.log('🔄 Farcaster serialization/postMessage error detected, trying alternative approach...');
+      if (error instanceof Error && (error.message.includes('serialize') || error.message.includes('postMessage') || error.message.includes('timeout'))) {
+        console.log('🔄 Farcaster error detected, trying alternative approach...');
+        
+        // Detect platform for specific handling
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         
         try {
-          // Try with even more minimal parameters
-          const retryResult = await writeContractAsync({
-            address: MONAD_CONTRACT_ADDRESS,
-            abi: SpinAndWinMonadABI,
-            functionName: 'spin',
-            value: BigInt("50000000000000000"), // 0.05 MON in wei
-          });
-          
-          console.log('✅ Alternative approach successful:', retryResult);
-          return retryResult;
+          if (isAndroid) {
+            // Android-specific fallback - try without value first
+            console.log('🔄 Trying Android-specific fallback...');
+            const retryResult = await writeContractAsync({
+              address: MONAD_CONTRACT_ADDRESS,
+              abi: SpinAndWinMonadABI,
+              functionName: 'spin',
+            });
+            
+            console.log('✅ Android fallback successful:', retryResult);
+            return retryResult;
+          } else {
+            // Try with even more minimal parameters for other platforms
+            const retryResult = await writeContractAsync({
+              address: MONAD_CONTRACT_ADDRESS,
+              abi: SpinAndWinMonadABI,
+              functionName: 'spin',
+              value: BigInt("50000000000000000"), // 0.05 MON in wei
+            });
+            
+            console.log('✅ Alternative approach successful:', retryResult);
+            return retryResult;
+          }
         } catch (retryError) {
           console.error('❌ Alternative approach also failed:', retryError);
           

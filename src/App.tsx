@@ -110,9 +110,13 @@ function MainApp() {
   // Force stop Monad spin if no result received within 30 seconds
   useEffect(() => {
     if (activeNetwork === 'monad' && monadSpinning) {
+      // Detect platform for different timeout values
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const timeoutDuration = isAndroid ? 45000 : 30000; // 45s for Android, 30s for others
+      
       const timeoutId = setTimeout(() => {
         if (monadSpinning && !monadEvents.latestSpinResult) {
-          console.log('⏰ Monad spin timeout - forcing stop');
+          console.log(`⏰ Monad spin timeout (${timeoutDuration}s) - forcing stop`);
           setMonadSpinning(false);
           setMonadSpinState(prev => ({
             ...prev,
@@ -121,7 +125,7 @@ function MainApp() {
           }));
           setIsButtonDisabled(false);
         }
-      }, 30000); // 30 seconds timeout
+      }, timeoutDuration);
       
       return () => clearTimeout(timeoutId);
     }
