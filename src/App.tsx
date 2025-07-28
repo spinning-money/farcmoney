@@ -41,7 +41,7 @@ function MainApp() {
   const [monadSpinState, setMonadSpinState] = useState({
     isSpinning: false,
     targetAngle: 0,
-    prizeIndex: undefined,
+    prizeIndex: undefined as number | undefined,
     resultReceived: false,
     currentRotation: 0
   });
@@ -57,7 +57,6 @@ function MainApp() {
     userData,
     spin,
     claim,
-    refreshData,
   } = currentHook;
   
   // Update Monad spin state when result is received
@@ -66,19 +65,19 @@ function MainApp() {
       console.log('🎯 Updating Monad spin state with result:', monadEvents.latestSpinResult);
       setMonadSpinState(prev => ({
         ...prev,
-        prizeIndex: monadEvents.latestSpinResult.prizeIndex,
+        prizeIndex: monadEvents.latestSpinResult!.prizeIndex,
         resultReceived: true
       }));
       
       // Refresh Monad contract data when result is received
-      if (refreshData) {
+      if (monadHook.refreshData) {
         console.log('🔄 Refreshing Monad data after spin result...');
         setTimeout(() => {
-          refreshData();
+          monadHook.refreshData();
         }, 2000); // 2 saniye sonra refresh et (transaction'ın onaylanması için)
       }
     }
-  }, [monadEvents.latestSpinResult, activeNetwork, refreshData]);
+  }, [monadEvents.latestSpinResult, activeNetwork, monadHook.refreshData]);
   
   // Check if wallet is on correct network
   const isOnCorrectNetwork = () => {
@@ -147,6 +146,33 @@ function MainApp() {
       }
     }
   };
+
+  // Handle wallet popup interruptions for both networks
+  useEffect(() => {
+    const handleWalletPopup = () => {
+      if (activeNetwork === 'base' && baseSpinState.isSpinning) {
+        console.log('👁️ Wallet popup detected for Base - pausing spin state');
+        // Don't stop the spin, just pause the sound
+      } else if (activeNetwork === 'monad' && monadSpinState.isSpinning) {
+        console.log('👁️ Wallet popup detected for Monad - pausing spin state');
+        // Don't stop the spin, just pause the sound
+      }
+    };
+
+    const handlePageVisibilityChange = () => {
+      if (document.hidden) {
+        handleWalletPopup();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handlePageVisibilityChange);
+    window.addEventListener('blur', handleWalletPopup);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handlePageVisibilityChange);
+      window.removeEventListener('blur', handleWalletPopup);
+    };
+  }, [activeNetwork, baseSpinState.isSpinning, monadSpinState.isSpinning]);
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#181A20] to-[#232946] flex flex-col items-center justify-start pb-8 pt-safe-top">

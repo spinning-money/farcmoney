@@ -118,6 +118,40 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
     }
   }, [spinState, network, localSpinState.isSpinning, playWheelSound, stopWheelSound, onSpinCancel]);
 
+  // Handle wallet popup interruptions
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && localSpinState.isSpinning) {
+        console.log('👁️ Page hidden (wallet popup) - pausing wheel sound');
+        stopWheelSound();
+      } else if (!document.hidden && localSpinState.isSpinning) {
+        console.log('👁️ Page visible again - resuming wheel sound');
+        playWheelSound();
+      }
+    };
+
+    const handleFocusChange = () => {
+      if (!document.hasFocus() && localSpinState.isSpinning) {
+        console.log('🎯 Window lost focus (wallet popup) - pausing wheel sound');
+        stopWheelSound();
+      } else if (document.hasFocus() && localSpinState.isSpinning) {
+        console.log('🎯 Window regained focus - resuming wheel sound');
+        playWheelSound();
+      }
+    };
+
+    // Listen for visibility and focus changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleFocusChange);
+    window.addEventListener('focus', handleFocusChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleFocusChange);
+      window.removeEventListener('focus', handleFocusChange);
+    };
+  }, [localSpinState.isSpinning, playWheelSound, stopWheelSound]);
+
   // Force stop sound when component unmounts or network changes
   useEffect(() => {
     return () => {
