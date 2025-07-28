@@ -107,6 +107,26 @@ function MainApp() {
     }
   }, [monadEvents.latestSpinResult, activeNetwork, monadHook.refreshData, monadSpinning]);
   
+  // Force stop Monad spin if no result received within 30 seconds
+  useEffect(() => {
+    if (activeNetwork === 'monad' && monadSpinning) {
+      const timeoutId = setTimeout(() => {
+        if (monadSpinning && !monadEvents.latestSpinResult) {
+          console.log('⏰ Monad spin timeout - forcing stop');
+          setMonadSpinning(false);
+          setMonadSpinState(prev => ({
+            ...prev,
+            isSpinning: false,
+            resultReceived: true
+          }));
+          setIsButtonDisabled(false);
+        }
+      }, 30000); // 30 seconds timeout
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [activeNetwork, monadSpinning, monadEvents.latestSpinResult]);
+  
   // Check if wallet is on correct network
   const isOnCorrectNetwork = () => {
     if (activeNetwork === 'base') {
@@ -138,21 +158,6 @@ function MainApp() {
       try {
         await spin();
         console.log('✅ Base spin transaction sent successfully');
-        
-        // Disable button for Base network too
-        setIsButtonDisabled(true);
-        
-        // After Base spin completes, show result for 5 seconds
-        setTimeout(() => {
-          setShowResult(true);
-          
-          // After 5 seconds, reset everything and enable button
-          setTimeout(() => {
-            console.log('🔄 Resetting Base result display and enabling button');
-            setShowResult(false);
-            setIsButtonDisabled(false);
-          }, 5000); // 5 seconds result display
-        }, 4000); // Wait for Base spin animation to complete
       } catch (error) {
         console.error('❌ Base spin transaction failed:', error);
         setBaseSpinState(prev => ({
@@ -160,7 +165,6 @@ function MainApp() {
           isSpinning: false,
           resultReceived: false
         }));
-        setIsButtonDisabled(false); // Re-enable button on error
       }
     } else {
       // Monad network - use Monad state
@@ -195,6 +199,23 @@ function MainApp() {
         monadEvents.clearLatestSpinResult();
         console.log('🧹 Third clear attempt');
       }, 300);
+      
+      // Set a timeout to force stop if no result received within 30 seconds
+      const timeoutId = setTimeout(() => {
+        if (monadSpinning && !monadEvents.latestSpinResult) {
+          console.log('⏰ Monad spin timeout - forcing stop');
+          setMonadSpinning(false);
+          setMonadSpinState(prev => ({
+            ...prev,
+            isSpinning: false,
+            resultReceived: true
+          }));
+          setIsButtonDisabled(false);
+        }
+      }, 30000); // 30 seconds timeout
+      
+      // Clean up timeout when component unmounts or state changes
+      return () => clearTimeout(timeoutId);
       
       try {
         await spin();
@@ -343,7 +364,7 @@ function MainApp() {
           <GameButtons
             isConnected={isConnected}
             isLoading={isLoading}
-            canSpin={!isPaused && !isLoading && !(activeNetwork === 'base' ? baseSpinState.isSpinning : monadSpinState.isSpinning) && isOnCorrectNetwork() && !isButtonDisabled}
+            canSpin={!isPaused && !isLoading && !(activeNetwork === 'base' ? baseSpinState.isSpinning : monadSpinState.isSpinning) && isOnCorrectNetwork() && (activeNetwork === 'base' ? true : !isButtonDisabled)}
             canClaim={!!userData && parseFloat(userData.claimable) > 0 && !isLoading && isOnCorrectNetwork()}
             claimableAmount={userData ? userData.claimable : '0'}
             claimedAmount={userData ? userData.claimed : '0'}
