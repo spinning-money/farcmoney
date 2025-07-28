@@ -46,6 +46,10 @@ function MainApp() {
     currentRotation: 0
   });
   
+  // Result display and button control states
+  const [showResult, setShowResult] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  
   // Get current network data
   const currentHook = activeNetwork === 'base' ? baseHook : monadHook;
   const {
@@ -69,6 +73,9 @@ function MainApp() {
         resultReceived: true
       }));
       
+      // Disable button immediately when result is received
+      setIsButtonDisabled(true);
+      
       // Çarkı durdur ve spinning state'i false yap - sadece onchain sonuç geldiğinde
       setTimeout(() => {
         console.log('🎯 Monad spin completed, setting monadSpinning to false');
@@ -77,6 +84,17 @@ function MainApp() {
           ...prev,
           isSpinning: false
         }));
+        
+        // Show result for 5 seconds
+        setShowResult(true);
+        
+        // After 5 seconds, reset everything and enable button
+        setTimeout(() => {
+          console.log('🔄 Resetting result display and enabling button');
+          setShowResult(false);
+          setIsButtonDisabled(false);
+          monadEvents.clearLatestSpinResult();
+        }, 5000); // 5 seconds result display
       }, 6000); // 6 saniye sonra durdur (3 saniye extra spin + 3 saniye final animation)
       
       // Refresh Monad contract data when result is received
@@ -120,6 +138,21 @@ function MainApp() {
       try {
         await spin();
         console.log('✅ Base spin transaction sent successfully');
+        
+        // Disable button for Base network too
+        setIsButtonDisabled(true);
+        
+        // After Base spin completes, show result for 5 seconds
+        setTimeout(() => {
+          setShowResult(true);
+          
+          // After 5 seconds, reset everything and enable button
+          setTimeout(() => {
+            console.log('🔄 Resetting Base result display and enabling button');
+            setShowResult(false);
+            setIsButtonDisabled(false);
+          }, 5000); // 5 seconds result display
+        }, 4000); // Wait for Base spin animation to complete
       } catch (error) {
         console.error('❌ Base spin transaction failed:', error);
         setBaseSpinState(prev => ({
@@ -127,6 +160,7 @@ function MainApp() {
           isSpinning: false,
           resultReceived: false
         }));
+        setIsButtonDisabled(false); // Re-enable button on error
       }
     } else {
       // Monad network - use Monad state
@@ -309,7 +343,7 @@ function MainApp() {
           <GameButtons
             isConnected={isConnected}
             isLoading={isLoading}
-            canSpin={!isPaused && !isLoading && !(activeNetwork === 'base' ? baseSpinState.isSpinning : monadSpinState.isSpinning) && isOnCorrectNetwork()}
+            canSpin={!isPaused && !isLoading && !(activeNetwork === 'base' ? baseSpinState.isSpinning : monadSpinState.isSpinning) && isOnCorrectNetwork() && !isButtonDisabled}
             canClaim={!!userData && parseFloat(userData.claimable) > 0 && !isLoading && isOnCorrectNetwork()}
             claimableAmount={userData ? userData.claimable : '0'}
             claimedAmount={userData ? userData.claimed : '0'}
@@ -334,6 +368,7 @@ function MainApp() {
               }
             }}
             spinState={activeNetwork === 'base' ? baseSpinState : monadSpinState}
+            showResult={showResult}
           />
         </div>
 

@@ -15,6 +15,7 @@ interface GameButtonsProps {
   onSpin: () => void;
   onClaim: () => void;
   spinState?: { isSpinning: boolean };
+  showResult?: boolean;
 }
 
 const GameButtons: React.FC<GameButtonsProps> = ({
@@ -29,7 +30,8 @@ const GameButtons: React.FC<GameButtonsProps> = ({
   onConnect,
   onSpin,
   onClaim,
-  spinState
+  spinState,
+  showResult
 }) => {
   const { playButtonClick } = useWheelSound();
   
@@ -65,6 +67,17 @@ const GameButtons: React.FC<GameButtonsProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center gap-4 px-4">
+      {/* Result Display */}
+      {showResult && (
+        <div className="w-full max-w-sm bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl p-6 text-center shadow-lg border border-green-400/30">
+          <div className="text-3xl mb-2">🎉</div>
+          <div className="text-xl font-bold text-white mb-2">Spin Complete!</div>
+          <div className="text-sm text-white/80">
+            Result displayed for 5 seconds...
+          </div>
+        </div>
+      )}
+      
       {/* Büyük Spin Butonu */}
       <button
         onClick={() => {
