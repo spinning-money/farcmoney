@@ -32,7 +32,7 @@ Flattened contract code: `SpinAndWinMonad_flattened.sol` dosyasını kullan
 - **Claim Fee**: 2% (200 basis points)
 - **Jackpot Share**: 20% (2000 basis points)
 - **Max Jackpot**: 100 MON
-- **Prizes**: 10 MON, 5 MON, 2 MON, 1 MON, 0.5 MON, 0.2 MON, Try Again
+- **Prizes**: 10 MON (0.1%), 5 MON (0.1%), 2 MON (0.2%), 1 MON (0.5%), 0.5 MON (1%), 0.2 MON (5%), Try Again (93.1%)
 
 ### 6. Security Features
 - **ReentrancyGuard**: ✅

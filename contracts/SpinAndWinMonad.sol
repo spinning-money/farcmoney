@@ -50,14 +50,13 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
 
     /*──── CONSTRUCTOR ────*/
     constructor() Ownable(msg.sender) {
-        // MON token prizes (higher values than ETH)
-        prizes.push(Prize(10 ether, 1));    // 10 MON - 0.1%
-        prizes.push(Prize(5 ether, 2));     // 5 MON - 0.2%
-        prizes.push(Prize(2 ether, 5));     // 2 MON - 0.5%
-        prizes.push(Prize(1 ether, 10));    // 1 MON - 1%
-        prizes.push(Prize(0.5 ether, 50));  // 0.5 MON - 5%
-        prizes.push(Prize(0.2 ether, 200)); // 0.2 MON - 20%
-        prizes.push(Prize(0, 732));         // %73.2 şansla hiçbir şey kazanamaz (Try Again/Empty)
+        prizes.push(Prize(10 ether, 1));    // 0.1%
+        prizes.push(Prize(5 ether, 1));     // 0.1%
+        prizes.push(Prize(2 ether, 2));     // 0.2%
+        prizes.push(Prize(1 ether, 5));     // 0.5%
+        prizes.push(Prize(0.5 ether, 10));  // 1%
+        prizes.push(Prize(0.2 ether, 50));  // 5%
+        prizes.push(Prize(0, 931));         // 93.1%
     }
 
     /*──── ADMIN SETTINGS ────*/

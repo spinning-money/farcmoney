@@ -17,12 +17,12 @@ const BASE_PRIZES = [
 // Monad network prizes (MON) - Contract prize table ile uyumlu
 const MONAD_PRIZES = [
   { name: '10 MON', color: '#FF6B6B', value: 10 },      // index 0 - 10 MON (0.1%)
-  { name: '5 MON', color: '#FF8C42', value: 5 },        // index 1 - 5 MON (0.2%)
-  { name: '2 MON', color: '#6BCF7F', value: 2 },        // index 2 - 2 MON (0.5%)
-  { name: '1 MON', color: '#4D96FF', value: 1 },        // index 3 - 1 MON (1%)
-  { name: '0.5 MON', color: '#9B59B6', value: 0.5 },    // index 4 - 0.5 MON (5%)
-  { name: '0.2 MON', color: '#E67E22', value: 0.2 },    // index 5 - 0.2 MON (20%)
-  { name: 'Try Again', color: '#E74C3C', value: 0 }     // index 6 - Try Again (73.2%)
+  { name: '5 MON', color: '#FF8C42', value: 5 },        // index 1 - 5 MON (0.1%)
+  { name: '2 MON', color: '#6BCF7F', value: 2 },        // index 2 - 2 MON (0.2%)
+  { name: '1 MON', color: '#4D96FF', value: 1 },        // index 3 - 1 MON (0.5%)
+  { name: '0.5 MON', color: '#9B59B6', value: 0.5 },    // index 4 - 0.5 MON (1%)
+  { name: '0.2 MON', color: '#E67E22', value: 0.2 },    // index 5 - 0.2 MON (5%)
+  { name: 'Try Again', color: '#E74C3C', value: 0 }     // index 6 - Try Again (93.1%)
 ];
 
 interface SpinWheelProps {
