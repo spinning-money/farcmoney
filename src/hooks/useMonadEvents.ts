@@ -240,10 +240,19 @@ export const useMonadEvents = () => {
   const clearLatestSpinResult = useCallback(() => {
     console.log('🧹 Clearing latest spin result...');
     setLatestSpinResult(null);
-    // Force clear after a short delay to ensure it's cleared
+    // Force clear multiple times to ensure it's cleared
     setTimeout(() => {
       setLatestSpinResult(null);
-    }, 50);
+      console.log('🧹 First clear attempt');
+    }, 25);
+    setTimeout(() => {
+      setLatestSpinResult(null);
+      console.log('🧹 Second clear attempt');
+    }, 75);
+    setTimeout(() => {
+      setLatestSpinResult(null);
+      console.log('🧹 Third clear attempt');
+    }, 150);
   }, []);
 
   return {

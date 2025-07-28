@@ -131,7 +131,8 @@ function MainApp() {
     } else {
       // Monad network - use Monad state
       console.log('🎯 Monad spin başlatılıyor...');
-      // Clear previous result before starting new spin
+      
+      // Aggressively clear previous result before starting new spin
       monadEvents.clearLatestSpinResult();
       
       // Reset Monad spin state completely
@@ -145,10 +146,21 @@ function MainApp() {
       setMonadSpinning(true);
       console.log('🎯 monadSpinning set to true');
       
-      // Force clear any previous result immediately
+      // Force clear any previous result multiple times to ensure it's cleared
       setTimeout(() => {
         monadEvents.clearLatestSpinResult();
-      }, 100);
+        console.log('🧹 First clear attempt');
+      }, 50);
+      
+      setTimeout(() => {
+        monadEvents.clearLatestSpinResult();
+        console.log('🧹 Second clear attempt');
+      }, 150);
+      
+      setTimeout(() => {
+        monadEvents.clearLatestSpinResult();
+        console.log('🧹 Third clear attempt');
+      }, 300);
       
       try {
         await spin();

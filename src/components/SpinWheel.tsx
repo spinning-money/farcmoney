@@ -65,7 +65,7 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
 
   // Handle Monad spin result - same logic as Base
   useEffect(() => {
-    if (network === 'monad' && monadSpinResult && localSpinState.isSpinning) {
+    if (network === 'monad' && monadSpinResult && localSpinState.isSpinning && monadSpinning) {
       console.log('🎯 Monad result received:', { reward: monadSpinResult.reward, prizeIndex: monadSpinResult.prizeIndex });
       
       const targetAngle = calculateTargetAngle(monadSpinResult.prizeIndex);
@@ -97,7 +97,7 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
         }, 3000); // 3 seconds for final animation (daha uzun)
       }, 3000); // 3 seconds of extra spinning after result (daha uzun)
     }
-  }, [monadSpinResult, network, segmentAngle, onMonadSpinComplete, stopWheelSound]);
+  }, [monadSpinResult, network, segmentAngle, onMonadSpinComplete, stopWheelSound, monadSpinning]);
   
 
 
