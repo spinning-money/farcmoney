@@ -4,9 +4,12 @@
     "payload": "eyJkb21haW4iOiJzcGlubW9uZXkudmVyY2VsLmFwcCJ9",
     "signature": "MHg0ZDA3NzMyY2JlZWVlMTUzZjA3MzQ2NmFlZGQxNTdhOTBlNThhMjNiMDZmZmY2MTU4MjQ1MWYwZDY1NzlkNzQ2NWQyZGMxZjJiMmMxOGI2NDhhMmU2MThlNzhmOGJiYmU1ZDQ3YzhlMDRkZWNmNmU5ZDI2NjJmY2MyYjBkNDgyNzFi"
   },
+  "baseBuilder": {
+    "allowedAddresses": ["0xcF1B5d6CD8e0bfd6B1a8B2c2ceAb0bc165EEE5B3"]
+  },
   "miniapp": {
-    "version": "1",
-    "name": "Spinning Money",
+    "version": "1", 
+    "name": "Spinning money",
     "iconUrl": "https://spinmoney.vercel.app/icon.png",
     "homeUrl": "https://spinmoney.vercel.app",
     "splashImageUrl": "https://spinmoney.vercel.app/splash.png",
@@ -15,7 +18,7 @@
     "description": "Spin the wheel and win ETH. Every spin grows the jackpot. Try your luck!",
     "tagline": "Spin. Win. Claim.",
     "primaryCategory": "games",
-    "tags": ["casino", "base", "vrf", "crypto", "chainlink"],
+    "tags": ["base", "games", "crypto", "chainlink"],
     "heroImageUrl": "https://spinmoney.vercel.app/sharing-image.png",
     "ogTitle": "Spinning Money",
     "ogDescription": "Spin the wheel and win ETH! Provably fair crypto gaming on Base.",
