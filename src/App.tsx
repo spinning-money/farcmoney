@@ -12,10 +12,12 @@ import ShareButton from './components/ShareButton';
 import SharePage from './components/SharePage';
 import GameInfo from './components/GameInfo';
 import NetworkSelector from './components/NetworkSelector';
+import DiceGame from './components/DiceGame';
 
 function MainApp() {
   const [activeNetwork, setActiveNetwork] = useState<'base' | 'monad'>('base');
   const chainId = useChainId();
+  const location = useLocation();
   
   // Initialize Farcaster wallet detection
   const { 
@@ -233,7 +235,7 @@ function MainApp() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-[#181A20] to-[#232946] flex flex-col items-center justify-start pb-8 pt-safe-top">
       {/* Üst Bilgi */}
-      <div className="w-full flex flex-col items-center pt-8 pb-4 px-4 relative">
+      <div className="w-full flex flex-col items-center pt-4 pb-4 px-4 relative">
         <h1
           className="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-green-300 to-blue-400 drop-shadow-lg text-center tracking-tight"
           style={{ letterSpacing: '0.01em' }}
@@ -262,6 +264,36 @@ function MainApp() {
           </div>
         )}
       </div>
+
+       {/* Navigation Bar */}
+       <div className="w-full flex justify-center pt-2 pb-4">
+         <div className="bg-gradient-to-r from-orange-500/10 via-red-500/10 to-pink-500/10 backdrop-blur-xl rounded-2xl p-1.5 border border-orange-400/30 shadow-xl">
+           <div className="flex gap-1">
+             <a
+               href="/"
+               className={`px-4 py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold flex items-center gap-2 ${
+                 location.pathname === '/'
+                   ? 'text-white bg-gradient-to-r from-emerald-500/30 to-teal-500/30 border border-emerald-400/50 shadow-lg scale-105'
+                   : 'text-white/70 hover:text-white hover:bg-emerald-500/20 hover:scale-102'
+               }`}
+             >
+               <span className="text-lg">🎰</span>
+               <span>Spin</span>
+             </a>
+             <a
+               href="/dice"
+               className={`px-4 py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold flex items-center gap-2 ${
+                 location.pathname === '/dice'
+                   ? 'text-white bg-gradient-to-r from-amber-500/30 to-yellow-500/30 border border-amber-400/50 shadow-lg scale-105'
+                   : 'text-white/70 hover:text-white hover:bg-amber-500/20 hover:scale-102'
+               }`}
+             >
+               <span className="text-lg">🎲</span>
+               <span>Dice</span>
+             </a>
+           </div>
+         </div>
+       </div>
 
       {/* Network Selector */}
       <NetworkSelector 
@@ -385,6 +417,7 @@ function App() {
       <Routes>
         <Route path="/" element={<MainApp />} />
         <Route path="/share" element={<SharePage />} />
+        <Route path="/dice" element={<DiceGame />} />
       </Routes>
     </Router>
   );

@@ -13,10 +13,16 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['buffer'],
+    include: ['buffer', 'eventemitter3'],
+    exclude: ['rpc-websockets'],
   },
   server: {
     port: 3000,
     host: true,
+  },
+  build: {
+    commonjsOptions: {
+      exclude: ['rpc-websockets'],
+    },
   },
 }) 

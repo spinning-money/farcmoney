@@ -638,6 +638,196 @@ export const useWheelSound = () => {
     }
   }, [initAudio]);
 
+  const playDiceRollStart = useCallback(() => {
+    // For mobile/Farcaster devices, try both haptic feedback and audio
+    if (isMobileRef.current) {
+      try {
+        // Try to unlock audio context first
+        unlockAudio();
+        
+        // Force unlock for Apple devices
+        forceUnlockAppleAudio();
+        
+        // 1. Haptic feedback
+        if ('vibrate' in navigator) {
+          navigator.vibrate(30); // Short vibration for dice roll start
+        }
+        
+        // 2. Try to play audio if context is unlocked
+        if (audioUnlockedRef.current && audioContextRef.current) {
+          const startTime = audioContextRef.current.currentTime;
+          const startOsc = audioContextRef.current.createOscillator();
+          const startGain = audioContextRef.current.createGain();
+          
+          startOsc.type = 'sine';
+          startOsc.frequency.setValueAtTime(200, startTime);
+          startOsc.frequency.exponentialRampToValueAtTime(400, startTime + 0.2);
+          
+          startGain.gain.setValueAtTime(0.8, startTime);
+          startGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+          
+          startOsc.connect(startGain);
+          startGain.connect(audioContextRef.current.destination);
+          
+          startOsc.start(startTime);
+          startOsc.stop(startTime + 0.2);
+        }
+        
+        // 3. Fallback: silent audio to keep context alive
+        const audio = new Audio();
+        audio.volume = 0;
+        audio.play().catch(() => {
+          // Ignore errors for silent audio
+        });
+      } catch (error) {
+        console.warn('⚠️ Mobile dice roll start feedback failed:', error);
+      }
+      return;
+    }
+    
+    // Desktop audio initialization
+    if (!initAudio()) {
+      console.warn('⚠️ Audio not supported on this device');
+      return;
+    }
+    
+    if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+      // For iOS Safari, we need user interaction to resume audio
+      audioContextRef.current.resume().catch(error => {
+        console.warn('⚠️ Could not resume audio context:', error);
+      });
+    }
+
+    if (audioContextRef.current) {
+      const startTime = audioContextRef.current.currentTime;
+      
+      // Create dice roll start sound (ascending whoosh)
+      const startOsc = audioContextRef.current.createOscillator();
+      const startGain = audioContextRef.current.createGain();
+      const filter = audioContextRef.current.createBiquadFilter();
+      
+      // Configure filter for soft whoosh sound
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(600, startTime);
+      filter.Q.setValueAtTime(0.5, startTime);
+      
+      // Configure oscillator for whoosh
+      startOsc.type = 'sine';
+      startOsc.frequency.setValueAtTime(200, startTime);
+      startOsc.frequency.exponentialRampToValueAtTime(400, startTime + 0.2);
+      
+      // Configure gain for soft whoosh sound
+      startGain.gain.setValueAtTime(0.03, startTime);
+      startGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+      
+      // Connect and play
+      startOsc.connect(filter);
+      filter.connect(startGain);
+      startGain.connect(audioContextRef.current.destination);
+      
+      startOsc.start(startTime);
+      startOsc.stop(startTime + 0.2);
+    }
+  }, [initAudio]);
+
+  const playDiceRollEnd = useCallback(() => {
+    // For mobile/Farcaster devices, try both haptic feedback and audio
+    if (isMobileRef.current) {
+      try {
+        // Try to unlock audio context first
+        unlockAudio();
+        
+        // Force unlock for Apple devices
+        forceUnlockAppleAudio();
+        
+        // 1. Haptic feedback
+        if ('vibrate' in navigator) {
+          navigator.vibrate([50, 50, 50]); // Triple tap for dice landing
+        }
+        
+        // 2. Try to play audio if context is unlocked
+        if (audioUnlockedRef.current && audioContextRef.current) {
+          const endTime = audioContextRef.current.currentTime;
+          
+          // Create two quick taps for dice landing
+          for (let i = 0; i < 2; i++) {
+            const endOsc = audioContextRef.current.createOscillator();
+            const endGain = audioContextRef.current.createGain();
+            
+            endOsc.type = 'sine';
+            endOsc.frequency.setValueAtTime(300, endTime);
+            endOsc.frequency.exponentialRampToValueAtTime(150, endTime + 0.1);
+            
+            endGain.gain.setValueAtTime(1.0, endTime);
+            endGain.gain.exponentialRampToValueAtTime(0.001, endTime + 0.1);
+            
+            endOsc.connect(endGain);
+            endGain.connect(audioContextRef.current.destination);
+            
+            endOsc.start(endTime + (i * 0.05));
+            endOsc.stop(endTime + (i * 0.05) + 0.1);
+          }
+        }
+        
+        // 3. Fallback: silent audio to keep context alive
+        const audio = new Audio();
+        audio.volume = 0;
+        audio.play().catch(() => {
+          // Ignore errors for silent audio
+        });
+      } catch (error) {
+        console.warn('⚠️ Mobile dice roll end feedback failed:', error);
+      }
+      return;
+    }
+    
+    // Desktop audio initialization
+    if (!initAudio()) {
+      console.warn('⚠️ Audio not supported on this device');
+      return;
+    }
+    
+    if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+      // For iOS Safari, we need user interaction to resume audio
+      audioContextRef.current.resume().catch(error => {
+        console.warn('⚠️ Could not resume audio context:', error);
+      });
+    }
+
+    if (audioContextRef.current) {
+      const endTime = audioContextRef.current.currentTime;
+      
+      // Create dice landing sound (two quick taps)
+      for (let i = 0; i < 2; i++) {
+        const endOsc = audioContextRef.current.createOscillator();
+        const endGain = audioContextRef.current.createGain();
+        const filter = audioContextRef.current.createBiquadFilter();
+        
+        // Configure filter for soft tap sound
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(500, endTime);
+        filter.Q.setValueAtTime(1, endTime);
+        
+        // Configure oscillator for tap
+        endOsc.type = 'sine';
+        endOsc.frequency.setValueAtTime(300, endTime);
+        endOsc.frequency.exponentialRampToValueAtTime(150, endTime + 0.1);
+        
+        // Configure gain for soft tap sound
+        endGain.gain.setValueAtTime(0.02, endTime);
+        endGain.gain.exponentialRampToValueAtTime(0.001, endTime + 0.1);
+        
+        // Connect and play
+        endOsc.connect(filter);
+        filter.connect(endGain);
+        endGain.connect(audioContextRef.current.destination);
+        
+        endOsc.start(endTime + (i * 0.05));
+        endOsc.stop(endTime + (i * 0.05) + 0.1);
+      }
+    }
+  }, [initAudio]);
+
   return {
     playWheelSound,
     stopWheelSound,
@@ -646,6 +836,8 @@ export const useWheelSound = () => {
     playButtonClick,
     playWinSound,
     playLoseSound,
+    playDiceRollStart,
+    playDiceRollEnd,
     isPlaying: isPlayingRef.current
   };
 }; 

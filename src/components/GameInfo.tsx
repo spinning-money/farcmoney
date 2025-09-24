@@ -6,21 +6,6 @@ interface GameInfoProps {
 }
 
 const GameInfo: React.FC<GameInfoProps> = ({ totalPool, jackpot }) => {
-  const prizes = [
-    { name: '0.05 ETH', color: '#FF6B6B', probability: '~14%' },
-    { name: '0.01 ETH', color: '#FF8C42', probability: '~14%' },
-    { name: '0.005 ETH', color: '#6BCF7F', probability: '~14%' },
-    { name: '0.0025 ETH', color: '#4D96FF', probability: '~14%' },
-    { name: '0.0005 ETH', color: '#9B59B6', probability: '~14%' },
-    { name: '0.00005 ETH', color: '#E91E63', probability: '~14%' },
-    { name: 'Try Again', color: '#95A5A6', probability: '~16%' },
-  ];
-
-  const jackpotRewards = [
-    { percentage: '30%', description: 'of Total Pool', color: '#FFD700' },
-    { percentage: '20%', description: 'of Total Pool', color: '#FFA500' },
-    { percentage: '10%', description: 'of Total Pool', color: '#FF6B6B' },
-  ];
 
   return (
     <div className="w-full max-w-4xl mx-auto px-3 pb-6">
@@ -37,62 +22,6 @@ const GameInfo: React.FC<GameInfoProps> = ({ totalPool, jackpot }) => {
         </div>
 
         <div className="p-4 space-y-4">
-          
-          {/* How Jackpot Works */}
-          <div className="mb-6 text-sm text-yellow-100/90 bg-yellow-900/40 rounded-xl px-4 py-3 shadow-sm text-center font-semibold">
-            <span className="font-bold text-yellow-300">How Jackpot Works:</span><br/>
-            Every spin has a small chance to win a bonus Jackpot, no matter which segment you land on. If you win the Jackpot, you’ll see a special “JACKPOT WIN!” message and the bonus will be added to your claimable balance. The Jackpot is separate from the main wheel prizes and can be won together with any result—even “Try Again”!
-          </div>
-
-          {/* Jackpot Reward System */}
-          <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-600/20 rounded-xl p-3 border border-yellow-500/20">
-            <h3 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm">
-              <span className="text-base">🏆</span>
-              Jackpot Rewards
-            </h3>
-            <div className="space-y-2">
-              {jackpotRewards.map((reward, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center justify-between bg-yellow-500/20 rounded-lg p-2 border border-yellow-500/30"
-                >
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: reward.color }}
-                    ></div>
-                    <span className="text-yellow-300 font-semibold text-sm">{reward.percentage}</span>
-                  </div>
-                  <span className="text-yellow-200/70 text-xs">{reward.description}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Prize Distribution */}
-          <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 rounded-xl p-3 border border-white/10">
-            <h3 className="text-white font-semibold mb-3 flex items-center gap-2 text-sm">
-              <span className="text-base">🎯</span>
-              Prize Distribution
-            </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {prizes.map((prize, index) => (
-                <div 
-                  key={index}
-                  className="bg-gradient-to-br from-slate-600/30 to-slate-700/30 rounded-lg p-2 border border-white/5 hover:border-white/20 transition-all duration-200"
-                >
-                  <div className="flex items-center gap-1 mb-1">
-                    <div 
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: prize.color }}
-                    ></div>
-                    <span className="text-white font-medium text-xs">{prize.name}</span>
-                  </div>
-                  <div className="text-xs text-white/60">{prize.probability}</div>
-                </div>
-              ))}
-            </div>
-          </div>
 
           {/* Chainlink VRF Section */}
           <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/20 rounded-xl p-3 border border-orange-500/20">
