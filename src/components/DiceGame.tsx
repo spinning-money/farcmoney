@@ -143,7 +143,7 @@ const DiceGame: React.FC = () => {
         // Wait for transaction to be mined
         const receipt = await publicClient.waitForTransactionReceipt({
           hash: pendingTxHash as `0x${string}`,
-          timeout: 60000 // 60 seconds timeout
+          timeout: 30000 // 30 seconds timeout
         });
         
         console.log('✅ Transaction confirmed:', receipt);
@@ -272,6 +272,22 @@ const DiceGame: React.FC = () => {
               }, 200); // 200ms gecikme ile
             }, 4500); // Total 4.5 seconds of excitement - daha uzun yuvarlanma
           }
+        } else {
+          // Event not found - stop animation anyway
+          console.log('⚠️ DiceRolled event not found, stopping animation');
+          
+          // Clear rolling interval
+          if (rollIntervalRef.current) {
+            clearInterval(rollIntervalRef.current);
+            rollIntervalRef.current = null;
+          }
+          
+          // Stop rolling animation
+          setIsRolling(false);
+          setAnimationPhase('idle');
+          
+          // Show error message
+          setLastResult({ won: false, payout: '0' });
         }
         
         // Clear pending transaction
