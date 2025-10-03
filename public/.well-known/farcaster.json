@@ -1,15 +1,17 @@
 {
   "accountAssociation": {
     "header": "eyJmaWQiOjExMTY3MDMsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhGOTcwN2M4NTNkOEQxRDlEQmZjNzdiMUUxM0Y0OUY3QjAyRDhBNDlDIn0",
-    "payload": "eyJkb21haW4iOiJzcGlubW9uZXkudmVyY2VsLmFwcCJ9",
+    "payload": "eyJkb21haW4iOiJzcGlubW1vbmV5LnZlcmNlbC5hcHAifQ",
     "signature": "MHg0ZDA3NzMyY2JlZWVlMTUzZjA3MzQ2NmFlZGQxNTdhOTBlNThhMjNiMDZmZmY2MTU4MjQ1MWYwZDY1NzlkNzQ2NWQyZGMxZjJiMmMxOGI2NDhhMmU2MThlNzhmOGJiYmU1ZDQ3YzhlMDRkZWNmNmU5ZDI2NjJmY2MyYjBkNDgyNzFi"
   },
   "baseBuilder": {
-    "allowedAddresses": ["0xcF1B5d6CD8e0bfd6B1a8B2c2ceAb0bc165EEE5B3"]
+    "allowedAddresses": [
+      "0xcF1B5d6CD8e0bfd6B1a8B2c2ceAb0bc165EEE5B3"
+    ]
   },
   "miniapp": {
-    "version": "1", 
-    "name": "Spinning money",
+    "version": "1",
+    "name": "Spinning Money",
     "iconUrl": "https://spinmoney.vercel.app/icon.png",
     "homeUrl": "https://spinmoney.vercel.app",
     "splashImageUrl": "https://spinmoney.vercel.app/splash.png",
@@ -32,6 +34,7 @@
       "actions.signIn",
       "wallet.getEthereumProvider"
     ],
-    "webhookUrl": "https://spinmoney.vercel.app/api/webhook"
+    "webhookUrl": "https://spinmoney.vercel.app/api/webhook",
+    "noindex": false
   }
 }
