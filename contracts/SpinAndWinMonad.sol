@@ -19,6 +19,7 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
     uint256 public jackpotPool;
     uint256 public ownerFees;
     uint256 public totalReservedForUsers; // Toplam kullanıcılara rezerve edilen miktar
+    uint256 public failedPayoutsTotal; // Başarısız ödemelerin toplamı
 
     struct User { uint256 spins; uint256 claimable; uint256 claimed; }
     mapping(address => User) public users;
@@ -37,6 +38,8 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
     event FeesUpdated(uint16 spinBP, uint16 claimBP);
     event JackpotShareUpdated(uint16 shareBP);
     event PoolsShifted(string direction, uint256 amount);
+    event PayoutFailed(address indexed recipient, uint256 amount);
+    event FailedPayoutsWithdrawn(uint256 amount);
 
     constructor() Ownable(msg.sender) {
         prizes.push(Prize(10 ether, 1));    // 0.1%
@@ -209,6 +212,24 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
         emit JackpotWithdrawn(amount);
     }
 
+    // Başarısız ödemeleri çek
+    function withdrawAllFailedPayouts() external onlyOwner nonReentrant {
+        uint256 amount = failedPayoutsTotal;
+        require(amount > 0, "no failed payouts");
+        
+        failedPayoutsTotal = 0;
+        
+        // Owner'a gönderirken başarısız olursa tekrar revert etmesin
+        (bool ok, ) = payable(owner()).call{ value: amount }("");
+        if (!ok) {
+            // Owner'a bile gönderilemiyorsa, geri koy
+            failedPayoutsTotal = amount;
+            revert("owner transfer failed");
+        }
+        
+        emit FailedPayoutsWithdrawn(amount);
+    }
+
     // Acil durum fonksiyonu - Tüm kontrakt bakiyesini çek (kullanıcıların parası dahil)
     function emergencyWithdrawAll() external onlyOwner nonReentrant {
         uint256 balance = address(this).balance;
@@ -219,8 +240,14 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
         jackpotPool = 0;
         ownerFees = 0;
         totalReservedForUsers = 0;
+        failedPayoutsTotal = 0;
         
-        _safeSend(payable(owner()), balance);
+        // Owner'a gönderirken revert etme
+        (bool ok, ) = payable(owner()).call{ value: balance }("");
+        if (!ok) {
+            revert("emergency transfer failed");
+        }
+        
         emit PoolWithdrawn(balance);
     }
 
@@ -237,7 +264,11 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
 
     function _safeSend(address payable to, uint256 value) private {
         (bool ok, ) = to.call{ value: value }("");
-        require(ok, "MON transfer failed");
+        if (!ok) {
+            // Transfer başarısız oldu - miktarı başarısız ödemeler havuzuna ekle
+            failedPayoutsTotal += value;
+            emit PayoutFailed(to, value);
+        }
     }
 
     // Helper fonksiyon - Mevcut durumu görmek için
@@ -247,6 +278,7 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
         uint256 _jackpotPool,
         uint256 _ownerFees,
         uint256 _totalReservedForUsers,
+        uint256 _failedPayoutsTotal,
         uint256 availableToWithdraw
     ) {
         contractBalance = address(this).balance;
@@ -254,6 +286,7 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
         _jackpotPool = jackpotPool;
         _ownerFees = ownerFees;
         _totalReservedForUsers = totalReservedForUsers;
+        _failedPayoutsTotal = failedPayoutsTotal;
         
         // Çekilebilir miktar = Kontrakt bakiyesi - Kullanıcılara rezerve edilen
         if (contractBalance > totalReservedForUsers) {
