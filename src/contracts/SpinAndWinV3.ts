@@ -714,7 +714,74 @@ export const SpinAndWinV3ABI = [
   {
     "stateMutability": "payable",
     "type": "receive"
+  },
+  {
+    "inputs": [],
+    "name": "totalReservedForUsers",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "failedPayoutsTotal",
+    "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getContractStatus",
+    "outputs": [
+      {"internalType": "uint256", "name": "contractBalance", "type": "uint256"},
+      {"internalType": "uint256", "name": "_prizePool", "type": "uint256"},
+      {"internalType": "uint256", "name": "_jackpotPool", "type": "uint256"},
+      {"internalType": "uint256", "name": "_ownerFees", "type": "uint256"},
+      {"internalType": "uint256", "name": "_totalReservedForUsers", "type": "uint256"},
+      {"internalType": "uint256", "name": "_failedPayoutsTotal", "type": "uint256"},
+      {"internalType": "uint256", "name": "availableToWithdraw", "type": "uint256"}
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawAllFailedPayouts",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "emergencyWithdrawAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawExcessBalance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": true, "internalType": "address", "name": "recipient", "type": "address"},
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"}
+    ],
+    "name": "PayoutFailed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"}
+    ],
+    "name": "FailedPayoutsWithdrawn",
+    "type": "event"
   }
 ];
 
-export const CONTRACT_ADDRESS = "0x501434B1eAa8A85dBAb5D6d933F2f22cb10e6253"; 
+export const CONTRACT_ADDRESS = "0xD42C4bf8b404b4Bf3e24348d50B58EdA01DF3b07"; 
