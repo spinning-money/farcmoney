@@ -18,6 +18,7 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
     uint256 public prizePool;
     uint256 public jackpotPool;
     uint256 public ownerFees;
+    uint256 public totalReservedForUsers; // Toplam kullanıcılara rezerve edilen miktar
 
     struct User { uint256 spins; uint256 claimable; uint256 claimed; }
     mapping(address => User) public users;
@@ -114,6 +115,7 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
         if (reward > 0 && prizePool >= reward) {
             prizePool -= reward;
             users[player].claimable += reward;
+            totalReservedForUsers += reward;
         }
 
         uint256 jr = (randomNumber >> 10) % 1000;
@@ -125,6 +127,7 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
         if (jpReward > 0) {
             jackpotPool -= jpReward;
             users[player].claimable += jpReward;
+            totalReservedForUsers += jpReward;
         }
         emit SpinResult(player, reward, jpReward, prizeIndex);
     }
@@ -137,6 +140,7 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
         ownerFees  += fee;
         users[msg.sender].claimable = 0;
         users[msg.sender].claimed  += net;
+        totalReservedForUsers -= amt; // Rezerve edilen miktarı azalt
         _safeSend(payable(msg.sender), net);
         emit Claimed(msg.sender, net, fee);
     }
@@ -149,7 +153,7 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
     }
 
     function withdrawAllFees() external onlyOwner nonReentrant {
-        uint256 amt = ownerFees; 
+        uint256 amt = ownerFees;
         ownerFees = 0;
         _safeSend(payable(owner()), amt); 
         emit FeesWithdrawn(amt);
@@ -205,9 +209,58 @@ contract SpinAndWinMonad is ReentrancyGuard, Pausable, Ownable {
         emit JackpotWithdrawn(amount);
     }
 
+    // Acil durum fonksiyonu - Tüm kontrakt bakiyesini çek (kullanıcıların parası dahil)
+    function emergencyWithdrawAll() external onlyOwner nonReentrant {
+        uint256 balance = address(this).balance;
+        require(balance > 0, "no balance");
+        
+        // Tüm state'leri sıfırla
+        prizePool = 0;
+        jackpotPool = 0;
+        ownerFees = 0;
+        totalReservedForUsers = 0;
+        
+        _safeSend(payable(owner()), balance);
+        emit PoolWithdrawn(balance);
+    }
+
+    // Sadece fazla/ekstra bakiyeyi çek (havuzlar dışında kalan)
+    function withdrawExcessBalance() external onlyOwner nonReentrant {
+        uint256 totalAllocated = prizePool + jackpotPool + ownerFees + totalReservedForUsers;
+        uint256 balance = address(this).balance;
+        require(balance > totalAllocated, "no excess balance");
+        
+        uint256 excess = balance - totalAllocated;
+        _safeSend(payable(owner()), excess);
+        emit PoolWithdrawn(excess);
+    }
+
     function _safeSend(address payable to, uint256 value) private {
         (bool ok, ) = to.call{ value: value }("");
         require(ok, "MON transfer failed");
+    }
+
+    // Helper fonksiyon - Mevcut durumu görmek için
+    function getContractStatus() external view returns (
+        uint256 contractBalance,
+        uint256 _prizePool,
+        uint256 _jackpotPool,
+        uint256 _ownerFees,
+        uint256 _totalReservedForUsers,
+        uint256 availableToWithdraw
+    ) {
+        contractBalance = address(this).balance;
+        _prizePool = prizePool;
+        _jackpotPool = jackpotPool;
+        _ownerFees = ownerFees;
+        _totalReservedForUsers = totalReservedForUsers;
+        
+        // Çekilebilir miktar = Kontrakt bakiyesi - Kullanıcılara rezerve edilen
+        if (contractBalance > totalReservedForUsers) {
+            availableToWithdraw = contractBalance - totalReservedForUsers;
+        } else {
+            availableToWithdraw = 0;
+        }
     }
 
     receive() external payable { prizePool += msg.value; }
