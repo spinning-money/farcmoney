@@ -27,7 +27,7 @@ contract SpinAndWinV3 is VRFConsumerBaseV2Plus, ReentrancyGuard, Pausable {
     IVRFCoordinatorV2Plus public immutable COORD;
     uint256 public immutable subId;
     bytes32 public immutable keyHash;
-    uint32  public callbackGasLimit  = 350_000;
+    uint32  public callbackGasLimit  = 200_000; // Optimized for cost efficiency
     uint16  public requestConfirmations = 3;
     uint32  public numWords = 1;
 
