@@ -365,4 +365,140 @@ body {
 @keyframes loading {
   0% { left: -100%; }
   100% { left: 100%; }
+}
+
+/* Casino Wheel Animations */
+@keyframes casinoLight {
+  0%, 100% { 
+    opacity: 0.3;
+    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+  }
+  50% { 
+    opacity: 1;
+    box-shadow: 0 0 15px currentColor, 0 0 25px currentColor, 0 0 35px currentColor;
+  }
+}
+
+@keyframes casinoLightRotate {
+  0% { 
+    opacity: 0.3;
+    transform: rotate(0deg) scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: rotate(180deg) scale(1.2);
+  }
+  100% { 
+    opacity: 0.3;
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes casinoGlow {
+  0%, 100% { 
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)) 
+            drop-shadow(0 0 20px rgba(255, 165, 0, 0.3));
+  }
+  50% { 
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)) 
+            drop-shadow(0 0 40px rgba(255, 165, 0, 0.6))
+            drop-shadow(0 0 60px rgba(255, 140, 0, 0.4));
+  }
+}
+
+@keyframes casinoSparkle {
+  0%, 100% { 
+    opacity: 0;
+    transform: scale(0) translate(0, 0);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.5) translate(var(--sparkle-x, 20px), var(--sparkle-y, -20px));
+  }
+}
+
+@keyframes casinoRays {
+  0% { 
+    opacity: 0.3;
+    transform: rotate(0deg) scale(1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: rotate(180deg) scale(1.1);
+  }
+  100% { 
+    opacity: 0.3;
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes casinoSpinGlow {
+  0% { 
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+  }
+  25% { 
+    filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.7))
+            drop-shadow(0 0 25px rgba(255, 165, 0, 0.5));
+  }
+  50% { 
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.8))
+            drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
+  }
+  75% { 
+    filter: drop-shadow(0 0 15px rgba(255, 140, 0, 0.7))
+            drop-shadow(0 0 25px rgba(255, 215, 0, 0.5));
+  }
+  100% { 
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+  }
+}
+
+.casino-wheel-container {
+  position: relative;
+  filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.4));
+}
+
+.casino-wheel-container.spinning {
+  animation: casinoSpinGlow 1s infinite;
+}
+
+.casino-light {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: casinoLight 1.5s infinite;
+}
+
+.casino-light:nth-child(2n) {
+  animation-delay: 0.2s;
+}
+
+.casino-light:nth-child(3n) {
+  animation-delay: 0.4s;
+}
+
+.casino-light:nth-child(4n) {
+  animation-delay: 0.6s;
+}
+
+.casino-ray {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 60%, rgba(255, 215, 0, 0.2) 70%, rgba(255, 165, 0, 0.1) 85%, transparent 100%);
+  animation: casinoRays 4s linear infinite;
+  pointer-events: none;
+}
+
+.casino-sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 6px white, 0 0 12px rgba(255, 215, 0, 0.8);
+  animation: casinoSparkle 2s infinite;
+  pointer-events: none;
 } 
