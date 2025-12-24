@@ -204,7 +204,7 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
   const generateCasinoLights = () => {
     const numLights = 32; // More lights for smoother circle
     const lights = [];
-    // Light radius should be exactly at the wheel edge (radius = size/2 - 8, so edge is at size/2 - 8)
+    // Light radius should be exactly at the wheel edge
     const lightRadius = radius; // Use the exact wheel radius
     const wheelCenterX = size / 2; // Wheel center within its container (before the 30px offset)
     
@@ -212,11 +212,11 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
       const angle = (i * 360) / numLights;
       const radian = (angle * Math.PI) / 180;
       // Calculate position relative to the wheel container (accounting for 30px offset)
-      const x = 30 + wheelCenterX + lightRadius * Math.cos(radian);
-      const y = 30 + wheelCenterX + lightRadius * Math.sin(radian);
+      const x = wheelCenterX + lightRadius * Math.cos(radian);
+      const y = wheelCenterX + lightRadius * Math.sin(radian);
       
-      // Alternating colors for casino effect
-      const colors = ['#FFD700', '#FF8C00', '#FF6347', '#FF1493', '#00CED1', '#FF00FF'];
+      // Casino theme colors - gold/yellow/amber tones
+      const colors = ['#FFD700', '#FFA500', '#FFB347', '#FFD700', '#FFA500', '#FFB347'];
       const color = colors[i % colors.length];
       
       lights.push(
@@ -230,7 +230,7 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
             background: color,
             color: color,
             transform: 'translate(-50%, -50%)',
-            animationDelay: `${(i * 0.1)}s`,
+            animationDelay: `${(i * 0.08)}s`,
           }}
         />
       );
@@ -238,20 +238,23 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
     return lights;
   };
 
-  // Generate sparkles that appear during spinning
+  // Generate sparkles that appear during spinning - more controlled
   const generateSparkles = () => {
     if (!localSpinState.isSpinning) return null;
     
     const sparkles = [];
-    const numSparkles = 8;
+    const numSparkles = 12; // More sparkles but more controlled
     const wheelCenterX = size / 2;
+    const baseSparkleRadius = radius + 20; // Fixed distance from wheel edge
+    
     for (let i = 0; i < numSparkles; i++) {
-      const angle = (i * 360) / numSparkles + (currentRotation % 360);
+      // Evenly distributed around the wheel
+      const angle = (i * 360) / numSparkles;
       const radian = (angle * Math.PI) / 180;
-      // Sparkles appear just outside the wheel edge
-      const sparkleRadius = radius + 15 + Math.random() * 30;
-      const x = 30 + wheelCenterX + sparkleRadius * Math.cos(radian);
-      const y = 30 + wheelCenterX + sparkleRadius * Math.sin(radian);
+      // Fixed radius, no random for more controlled effect
+      const sparkleRadius = baseSparkleRadius;
+      const x = wheelCenterX + sparkleRadius * Math.cos(radian);
+      const y = wheelCenterX + sparkleRadius * Math.sin(radian);
       
       sparkles.push(
         <div
@@ -261,10 +264,10 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
             position: 'absolute',
             left: x,
             top: y,
-            '--sparkle-x': `${Math.cos(radian) * 30}px`,
-            '--sparkle-y': `${Math.sin(radian) * 30}px`,
-            animationDelay: `${(i * 0.25)}s`,
-            animationDuration: `${1.5 + Math.random()}s`,
+            '--sparkle-x': `${Math.cos(radian) * 25}px`,
+            '--sparkle-y': `${Math.sin(radian) * 25}px`,
+            animationDelay: `${(i * 0.15)}s`,
+            animationDuration: '2s',
           } as React.CSSProperties}
         />
       );
@@ -299,19 +302,49 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
             height: size + 60,
           }}
         >
-          {/* Casino Ray Effects - Rotating background glow */}
+          {/* Casino Ray Effects - Single controlled rotating background glow */}
           {localSpinState.isSpinning && (
-            <>
-              <div className="casino-ray" style={{ animationDuration: '3s' }} />
-              <div className="casino-ray" style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
-            </>
+            <div 
+              className="casino-ray" 
+              style={{ 
+                animationDuration: '3s',
+                left: 30,
+                top: 30,
+                width: size,
+                height: size,
+              }} 
+            />
           )}
 
-          {/* Casino Lights around the wheel */}
-          {generateCasinoLights()}
+          {/* Casino Lights around the wheel - rotate faster than wheel when spinning */}
+          <div
+            style={{
+              position: 'absolute',
+              left: 30,
+              top: 30,
+              width: size,
+              height: size,
+              transform: localSpinState.isSpinning 
+                ? `rotate(${currentRotation * 1.5}deg)` // 1.5x faster than wheel
+                : 'rotate(0deg)',
+              transition: 'none',
+            }}
+          >
+            {generateCasinoLights()}
+          </div>
 
-          {/* Sparkles during spinning */}
-          {generateSparkles()}
+          {/* Sparkles during spinning - positioned relative to wheel container */}
+          <div
+            style={{
+              position: 'absolute',
+              left: 30,
+              top: 30,
+              width: size,
+              height: size,
+            }}
+          >
+            {generateSparkles()}
+          </div>
 
           {/* Wheel Container - Both SVG and labels rotate together */}
           <div 

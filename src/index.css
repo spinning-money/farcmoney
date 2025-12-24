@@ -407,13 +407,21 @@ body {
 }
 
 @keyframes casinoSparkle {
-  0%, 100% { 
+  0% { 
     opacity: 0;
     transform: scale(0) translate(0, 0);
   }
-  50% { 
+  30% { 
     opacity: 1;
-    transform: scale(1.5) translate(var(--sparkle-x, 20px), var(--sparkle-y, -20px));
+    transform: scale(1.2) translate(var(--sparkle-x, 20px), var(--sparkle-y, -20px));
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.2) translate(var(--sparkle-x, 20px), var(--sparkle-y, -20px));
+  }
+  100% { 
+    opacity: 0;
+    transform: scale(0.5) translate(calc(var(--sparkle-x, 20px) * 1.2), calc(var(--sparkle-y, -20px) * 1.2));
   }
 }
 
@@ -484,21 +492,19 @@ body {
 
 .casino-ray {
   position: absolute;
-  width: 100%;
-  height: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle, transparent 60%, rgba(255, 215, 0, 0.2) 70%, rgba(255, 165, 0, 0.1) 85%, transparent 100%);
-  animation: casinoRays 4s linear infinite;
+  background: radial-gradient(circle, transparent 65%, rgba(255, 215, 0, 0.15) 72%, rgba(255, 165, 0, 0.08) 80%, transparent 90%);
+  animation: casinoRays 3s linear infinite;
   pointer-events: none;
 }
 
 .casino-sparkle {
   position: absolute;
-  width: 4px;
-  height: 4px;
-  background: white;
+  width: 5px;
+  height: 5px;
+  background: #FFD700;
   border-radius: 50%;
-  box-shadow: 0 0 6px white, 0 0 12px rgba(255, 215, 0, 0.8);
+  box-shadow: 0 0 8px #FFD700, 0 0 16px rgba(255, 215, 0, 0.6), 0 0 24px rgba(255, 165, 0, 0.4);
   animation: casinoSparkle 2s infinite;
   pointer-events: none;
 } 
