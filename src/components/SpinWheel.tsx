@@ -200,16 +200,20 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
 
   const resultMessage = getResultMessage();
 
-  // Generate casino lights around the wheel
+  // Generate casino lights around the wheel - exactly on the wheel edge
   const generateCasinoLights = () => {
-    const numLights = 24;
+    const numLights = 32; // More lights for smoother circle
     const lights = [];
+    // Light radius should be exactly at the wheel edge (radius = size/2 - 8, so edge is at size/2 - 8)
+    const lightRadius = radius; // Use the exact wheel radius
+    const wheelCenterX = size / 2; // Wheel center within its container (before the 30px offset)
+    
     for (let i = 0; i < numLights; i++) {
       const angle = (i * 360) / numLights;
       const radian = (angle * Math.PI) / 180;
-      const lightRadius = size / 2 + 15;
-      const x = center + lightRadius * Math.cos(radian);
-      const y = center + lightRadius * Math.sin(radian);
+      // Calculate position relative to the wheel container (accounting for 30px offset)
+      const x = 30 + wheelCenterX + lightRadius * Math.cos(radian);
+      const y = 30 + wheelCenterX + lightRadius * Math.sin(radian);
       
       // Alternating colors for casino effect
       const colors = ['#FFD700', '#FF8C00', '#FF6347', '#FF1493', '#00CED1', '#FF00FF'];
@@ -220,12 +224,13 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
           key={i}
           className="casino-light"
           style={{
+            position: 'absolute',
             left: x,
             top: y,
             background: color,
             color: color,
             transform: 'translate(-50%, -50%)',
-            animationDelay: `${(i * 0.15)}s`,
+            animationDelay: `${(i * 0.1)}s`,
           }}
         />
       );
@@ -239,18 +244,21 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
     
     const sparkles = [];
     const numSparkles = 8;
+    const wheelCenterX = size / 2;
     for (let i = 0; i < numSparkles; i++) {
       const angle = (i * 360) / numSparkles + (currentRotation % 360);
       const radian = (angle * Math.PI) / 180;
-      const sparkleRadius = size / 2 + 30 + Math.random() * 40;
-      const x = center + sparkleRadius * Math.cos(radian);
-      const y = center + sparkleRadius * Math.sin(radian);
+      // Sparkles appear just outside the wheel edge
+      const sparkleRadius = radius + 15 + Math.random() * 30;
+      const x = 30 + wheelCenterX + sparkleRadius * Math.cos(radian);
+      const y = 30 + wheelCenterX + sparkleRadius * Math.sin(radian);
       
       sparkles.push(
         <div
           key={i}
           className="casino-sparkle"
           style={{
+            position: 'absolute',
             left: x,
             top: y,
             '--sparkle-x': `${Math.cos(radian) * 30}px`,
