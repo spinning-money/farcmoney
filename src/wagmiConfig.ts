@@ -1,37 +1,11 @@
-import { http, createConfig, webSocket } from 'wagmi'
+import { http, createConfig } from 'wagmi'
 import { base } from 'wagmi/chains'
 import { farcasterMiniApp as miniAppConnector } from '@farcaster/miniapp-wagmi-connector'
 
-// Monad testnet chain definition
-const monadTestnet = {
-  id: 10143, // Monad testnet chain ID
-  name: 'Monad Testnet',
-  network: 'monad-testnet',
-  nativeCurrency: {
-    decimals: 18,
-    name: 'Monad',
-    symbol: 'MON',
-  },
-  rpcUrls: {
-    public: { 
-      http: ['https://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA'],
-      webSocket: ['wss://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA']
-    },
-    default: { 
-      http: ['https://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA'],
-      webSocket: ['wss://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA']
-    },
-  },
-  blockExplorers: {
-    default: { name: 'Monad Explorer', url: 'https://explorer.testnet.monad.xyz' },
-  },
-} as const;
-
 export const config = createConfig({
-  chains: [base, monadTestnet],
+  chains: [base],
   transports: {
     [base.id]: http(),
-    [monadTestnet.id]: http('https://monad-testnet.g.alchemy.com/v2/EXk1VtDVCaeNBRAWsi7WA'),
   },
   connectors: [
     miniAppConnector()

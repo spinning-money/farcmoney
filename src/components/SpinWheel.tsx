@@ -1,10 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SpinState } from '../hooks/useSpinEvents';
-import { MonadSpinEvent } from '../hooks/useMonadEvents';
 import { useWheelSound } from '../hooks/useWheelSound';
 
 // Base network prizes (ETH)
-const BASE_PRIZES = [
+const PRIZES = [
   { name: '0.05 ETH', color: '#FF6B6B', value: 0.05 },
   { name: '0.01 ETH', color: '#FF8C42', value: 0.01 },
   { name: '0.005 ETH', color: '#6BCF7F', value: 0.005 },
@@ -14,33 +13,17 @@ const BASE_PRIZES = [
   { name: 'Try Again', color: '#E74C3C', value: 0 }
 ];
 
-// Monad network prizes (MON) - Contract prize table ile uyumlu
-const MONAD_PRIZES = [
-  { name: '10 MON', color: '#FF6B6B', value: 10 },      // index 0 - 10 MON (0.1%)
-  { name: '5 MON', color: '#FF8C42', value: 5 },        // index 1 - 5 MON (0.1%)
-  { name: '2 MON', color: '#6BCF7F', value: 2 },        // index 2 - 2 MON (0.2%)
-  { name: '1 MON', color: '#4D96FF', value: 1 },        // index 3 - 1 MON (0.5%)
-  { name: '0.5 MON', color: '#9B59B6', value: 0.5 },    // index 4 - 0.5 MON (1%)
-  { name: '0.2 MON', color: '#E67E22', value: 0.2 },    // index 5 - 0.2 MON (5%)
-  { name: 'Try Again', color: '#E74C3C', value: 0 }     // index 6 - Try Again (93.1%)
-];
-
 interface SpinWheelProps {
   spinState: SpinState;
   totalPool: string;
   jackpot: string;
-  network: 'base' | 'monad';
-  monadSpinResult?: MonadSpinEvent | null;
-  onResultProcessed?: () => void;
-  monadSpinning?: boolean;
-  onMonadSpinComplete?: () => void;
-  onSpinCancel?: () => void;
+  network: 'base';
 }
 
-const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, onResultProcessed, monadSpinning, onMonadSpinComplete, onSpinCancel }: SpinWheelProps) => {
+const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) => {
   const [pulseScale, setPulseScale] = useState(1);
   const [localSpinState, setLocalSpinState] = useState(spinState);
-  const { playWheelSound, stopWheelSound, setSpeed, playWinSound, playLoseSound } = useWheelSound();
+  const { playWheelSound, stopWheelSound, playWinSound, playLoseSound } = useWheelSound();
   
   // Mobile-first: çark genişliği ekrana göre
   const size = network === 'base' ? Math.min(window.innerWidth * 0.85, 360) : Math.min(window.innerWidth * 0.85, 400);
@@ -157,57 +140,16 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
     };
   }, [stopWheelSound]);
 
-  // Start spinning for Monad (same as Base startSpin)
-  useEffect(() => {
-    if (network === 'monad' && monadSpinning && !localSpinState.isSpinning) {
-      setLocalSpinState(prev => ({
-        ...prev,
-        isSpinning: true,
-        resultReceived: false,
-        prizeIndex: undefined
-      }));
-      // Start wheel sound
-      playWheelSound();
-      
-      // Set a timeout to force stop if no result received within 15 seconds (kısaltıldı)
-      const timeoutId = setTimeout(() => {
-        if (localSpinState.isSpinning && !localSpinState.resultReceived) {
-          setLocalSpinState(prev => ({
-            ...prev,
-            isSpinning: false,
-            resultReceived: true
-          }));
-          // Ses ve çark aynı anda durmalı
-          stopWheelSound();
-          onMonadSpinComplete?.();
-        }
-      }, 15000); // 15 seconds timeout (kısaltıldı)
-      
-      // Clean up timeout when component unmounts or state changes
-      return () => clearTimeout(timeoutId);
-    }
-    
-    // Stop sound when Monad spinning stops
-    if (network === 'monad' && !monadSpinning && localSpinState.isSpinning) {
-      stopWheelSound();
-    }
-    
-    // Stop sound when Base spinning stops
-    if (network === 'base' && !spinState.isSpinning && localSpinState.isSpinning) {
-      stopWheelSound();
-    }
-  }, [network, monadSpinning, localSpinState.isSpinning, localSpinState.resultReceived, playWheelSound, stopWheelSound, onMonadSpinComplete]);
 
   // Pulsing animation for winning segment
   useEffect(() => {
-    const PRIZES = network === 'base' ? BASE_PRIZES : MONAD_PRIZES;
     if (!localSpinState.isSpinning && localSpinState.prizeIndex !== undefined && PRIZES[localSpinState.prizeIndex]?.name !== 'Try Again') {
       const interval = setInterval(() => {
         setPulseScale(prev => prev === 1 ? 1.1 : 1);
       }, 500);
       return () => clearInterval(interval);
     }
-  }, [localSpinState.isSpinning, localSpinState.prizeIndex, network]);
+  }, [localSpinState.isSpinning, localSpinState.prizeIndex]);
 
   // Animation logic - smooth continuous rotation
   useEffect(() => {
@@ -250,10 +192,6 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
             // Stop wheel sound only when animation is completely finished
             // Don't stop sound here - let the parent handle it
             
-            // Notify parent that Monad spin is complete
-            if (network === 'monad') {
-              onMonadSpinComplete?.();
-            }
           }
         }
       };
@@ -266,12 +204,8 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
         cancelAnimationFrame(animationId);
       }
     };
-  }, [localSpinState.isSpinning, localSpinState.resultReceived, localSpinState.targetAngle, stopWheelSound, network, onMonadSpinComplete]);
+  }, [localSpinState.isSpinning, localSpinState.resultReceived, localSpinState.targetAngle, stopWheelSound]);
 
-  // Don't render result message while spinning (same as Base)
-
-
-  const PRIZES = network === 'base' ? BASE_PRIZES : MONAD_PRIZES;
   const currentRotation = localSpinState.currentRotation || 0;
 
   const getResultMessage = () => {
@@ -313,19 +247,9 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
     }
   }, [localSpinState.isSpinning, localSpinState.resultReceived, localSpinState.prizeIndex, PRIZES, playWinSound, playLoseSound]);
 
-  // Stop wheel sound when Monad result is received (before final animation)
-  React.useEffect(() => {
-    if (network === 'monad' && localSpinState.resultReceived && localSpinState.isSpinning) {
-      // Don't stop wheel sound here - let it continue until animation completes
-      // The sound will be stopped when the animation finishes
-    }
-  }, [network, localSpinState.resultReceived, localSpinState.isSpinning]);
-
   const resultMessage = getResultMessage();
 
-  // Base network için orijinal düzen
-  if (network === 'base') {
-    return (
+  return (
       <div className="relative flex flex-col items-center w-full">
         {/* Total Pool & Jackpot Banner */}
         <div className="w-full max-w-md mx-auto bg-gradient-to-r from-blue-500 via-purple-500 to-yellow-500 rounded-lg p-3 mb-4 shadow-lg">
@@ -502,189 +426,6 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network, monadSpinResult, on
         )}
       </div>
     );
-  }
-
-  // Monad network için yeni düzen
-  return (
-    <div className="relative flex flex-col items-center justify-center w-full max-w-md mx-auto">
-      {/* Total Pool & Jackpot Banner */}
-      <div className="w-full bg-gradient-to-r from-blue-500 via-purple-500 to-yellow-500 rounded-lg p-4 mb-6 shadow-lg">
-        <div className="flex justify-between items-center text-white">
-          <div className="text-center">
-            <div className="text-sm font-medium opacity-90">TOTAL POOL</div>
-            <div className="text-2xl font-bold">MON {totalPool}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-sm font-medium opacity-90 flex items-center justify-center gap-1">
-              JACKPOT
-              <span className="text-yellow-300">🎰</span>
-            </div>
-            <div className="text-2xl font-bold">MON {jackpot}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Spin Wheel */}
-      <div className="relative" style={{ width: size, height: size }}>
-        {/* Wheel Container - Both SVG and labels rotate together */}
-        <div 
-          className="relative"
-          style={{
-            transform: `rotate(${currentRotation}deg)`,
-            transition: 'none' // We handle animation manually
-          }}
-        >
-          {/* SVG Wheel */}
-          <svg 
-            width={size} 
-            height={size} 
-            viewBox={`0 0 ${size} ${size}`} 
-            className="block"
-          >
-            {PRIZES.map((prize, i) => {
-              const startAngle = i * segmentAngle - 90;
-              const endAngle = (i + 1) * segmentAngle - 90;
-              const largeArc = segmentAngle > 180 ? 1 : 0;
-              const x1 = center + radius * Math.cos((startAngle * Math.PI) / 180);
-              const y1 = center + radius * Math.sin((startAngle * Math.PI) / 180);
-              const x2 = center + radius * Math.cos((endAngle * Math.PI) / 180);
-              const y2 = center + radius * Math.sin((endAngle * Math.PI) / 180);
-              const d = `M${center},${center} L${x1},${y1} A${radius},${radius} 0 ${largeArc} 1 ${x2},${y2} Z`;
-              
-              // Enhanced winning segment highlighting
-              const safePrizeIndex = localSpinState.prizeIndex !== undefined ? localSpinState.prizeIndex % PRIZES.length : undefined;
-              const isWinningSegment = safePrizeIndex !== undefined && i === safePrizeIndex && !localSpinState.isSpinning;
-              const isResult = safePrizeIndex !== undefined && !localSpinState.isSpinning;
-              const isTryAgain = isWinningSegment && prize.name === 'Try Again';
-              const isWinningPrize = isWinningSegment && prize.name !== 'Try Again';
-
-              // Renk ve opaklık mantığı
-              let fillColor = prize.color;
-              let strokeColor = '#232946';
-              let opacity = 1;
-              if (isResult) {
-                if (isWinningPrize) {
-                  fillColor = '#00FF7F'; // Canlı yeşil kazanan
-                  strokeColor = '#00C46A';
-                  opacity = 1;
-                } else if (isTryAgain) {
-                  fillColor = '#FF3B3B'; // Canlı kırmızı kaybeden
-                  strokeColor = '#B80000';
-                  opacity = 1;
-                } else {
-                  opacity = 0.4; // Diğer segmentler soluk
-                }
-              }
-
-              return (
-                <path
-                  key={i}
-                  d={d}
-                  fill={fillColor}
-                  stroke={strokeColor}
-                  strokeWidth={isWinningSegment ? 8 : 2}
-                  className="transition-all duration-500"
-                  style={{
-                    filter: 'none',
-                    transform: isWinningSegment ? `scale(${pulseScale})` : 'scale(1)',
-                    opacity,
-                  }}
-                />
-              );
-            })}
-          </svg>
-
-          {/* Segment Labels - These now rotate with the wheel */}
-          {PRIZES.map((prize, i) => {
-            const angle = (i + 0.5) * segmentAngle - 90;
-            const x = center + (radius - 40) * Math.cos((angle * Math.PI) / 180);
-            const y = center + (radius - 40) * Math.sin((angle * Math.PI) / 180);
-            
-            // Enhanced winning segment text highlighting
-            const safePrizeIndex = localSpinState.prizeIndex !== undefined ? localSpinState.prizeIndex % PRIZES.length : undefined;
-            const isWinningSegment = safePrizeIndex !== undefined && i === safePrizeIndex && !localSpinState.isSpinning;
-            const isResult = safePrizeIndex !== undefined && !localSpinState.isSpinning;
-            const isTryAgain = isWinningSegment && prize.name === 'Try Again';
-            const isWinningPrize = isWinningSegment && prize.name !== 'Try Again';
-
-            let textColor = 'white';
-            let fontWeight = 700;
-            let opacity = 1;
-            if (isResult) {
-              if (isWinningPrize) {
-                textColor = '#00FF7F';
-                fontWeight = 900;
-                opacity = 1;
-              } else if (isTryAgain) {
-                textColor = '#FF3B3B';
-                fontWeight = 900;
-                opacity = 1;
-              } else {
-                opacity = 0.4;
-              }
-            }
-
-            // Adjust font size based on text length
-            let fontSize = isWinningSegment ? '16px' : '12px';
-
-            return (
-              <div
-                key={i}
-                className={`absolute font-bold drop-shadow-lg select-none pointer-events-none transition-all duration-500`}
-                style={{
-                  left: x,
-                  top: y,
-                  width: 80,
-                  textAlign: 'center',
-                  transform: `translate(-50%, -50%) scale(${isWinningSegment ? pulseScale : 1})`,
-                  fontSize,
-                  textShadow: isWinningSegment
-                    ? '3px 3px 6px rgba(0,0,0,1), 0 0 10px #00FF7F88'
-                    : '1px 1px 2px rgba(0,0,0,0.5)',
-                  fontWeight,
-                  color: textColor,
-                  opacity,
-                  lineHeight: '1.1',
-                }}
-              >
-                {prize.name}
-              </div>
-            );
-          })}
-
-          {/* Token simgesi - merkez, dönen kısımda */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-lg border-4 border-[#232946]">
-            <span className="text-white font-bold text-sm transform -rotate-90">
-              MON
-            </span>
-          </div>
-        </div>
-
-        {/* Pointer */}
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">
-          <div className="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-white drop-shadow-lg"></div>
-        </div>
-      </div>
-
-      {/* Result Display */}
-      {!localSpinState.isSpinning && resultMessage && (
-        <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-20">
-          {/* Main result card */}
-          <div className={`${resultMessage?.color === '#27AE60' ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-red-500 to-red-600'} text-white px-6 py-3 rounded-2xl shadow-xl border-2 border-white/20 flex flex-col items-center gap-1`}>
-            <div className="text-2xl">{resultMessage?.emoji || '🎯'}</div>
-            <div className="text-lg font-bold">{resultMessage?.title || 'Result'}</div>
-            <div className="text-sm font-medium opacity-90">{resultMessage?.subtitle || 'Processing...'}</div>
-          </div>
-          {/* Glow effect */}
-          <div className={`absolute inset-0 ${resultMessage?.color === '#27AE60' ? 'bg-green-400' : 'bg-red-400'} blur-xl opacity-30 rounded-2xl -z-10`}></div>
-        </div>
-      )}
-      
-
-      
-
-    </div>
-  );
 };
 
 export default SpinWheel; 

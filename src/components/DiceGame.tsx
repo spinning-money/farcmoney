@@ -317,7 +317,7 @@ const DiceGame: React.FC = () => {
   }, []);
   
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#181A20] to-[#232946] flex flex-col items-center justify-start pb-8 pt-safe-top">
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#181A20] to-[#232946] flex flex-col items-center justify-start pb-24 pt-safe-top">
         
       {/* Header */}
       <div className="w-full flex flex-col items-center pt-6 pb-4 px-4 relative">
@@ -350,35 +350,6 @@ const DiceGame: React.FC = () => {
         )}
       </div>
 
-      {/* Navigation Bar */}
-      <div className="w-full flex justify-center pt-2 pb-4">
-        <div className="bg-gradient-to-r from-orange-500/10 via-red-500/10 to-pink-500/10 backdrop-blur-xl rounded-2xl p-1.5 border border-orange-400/30 shadow-xl">
-          <div className="flex gap-1">
-            <a
-              href="/"
-              className={`px-4 py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold flex items-center gap-2 ${
-                location.pathname === '/'
-                  ? 'text-white bg-gradient-to-r from-emerald-500/30 to-teal-500/30 border border-emerald-400/50 shadow-lg scale-105'
-                  : 'text-white/70 hover:text-white hover:bg-emerald-500/20 hover:scale-102'
-              }`}
-            >
-              <span className="text-lg">🎰</span>
-              <span>Spin</span>
-            </a>
-            <a
-              href="/dice"
-              className={`px-4 py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold flex items-center gap-2 ${
-                location.pathname === '/dice'
-                  ? 'text-white bg-gradient-to-r from-amber-500/30 to-yellow-500/30 border border-amber-400/50 shadow-lg scale-105'
-                  : 'text-white/70 hover:text-white hover:bg-amber-500/20 hover:scale-102'
-              }`}
-            >
-              <span className="text-lg">🎲</span>
-              <span>Dice</span>
-            </a>
-          </div>
-        </div>
-      </div>
 
 
         
@@ -734,6 +705,36 @@ const DiceGame: React.FC = () => {
               </div>
 
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Fixed Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-orange-500/10 via-red-500/10 to-pink-500/10 backdrop-blur-xl border-t border-orange-400/30 shadow-2xl z-50 pb-safe-bottom">
+        <div className="w-full flex justify-center py-3 px-4">
+          <div className="flex gap-1 max-w-md w-full">
+            <a
+              href="/"
+              className={`flex-1 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-semibold flex items-center justify-center gap-2 ${
+                location.pathname === '/'
+                  ? 'text-white bg-gradient-to-r from-emerald-500/30 to-teal-500/30 border border-emerald-400/50 shadow-lg scale-105'
+                  : 'text-white/70 hover:text-white hover:bg-emerald-500/20 hover:scale-102'
+              }`}
+            >
+              <span className="text-lg">🎰</span>
+              <span>Spin</span>
+            </a>
+            <a
+              href="/dice"
+              className={`flex-1 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-semibold flex items-center justify-center gap-2 ${
+                location.pathname === '/dice'
+                  ? 'text-white bg-gradient-to-r from-amber-500/30 to-yellow-500/30 border border-amber-400/50 shadow-lg scale-105'
+                  : 'text-white/70 hover:text-white hover:bg-amber-500/20 hover:scale-102'
+              }`}
+            >
+              <span className="text-lg">🎲</span>
+              <span>Dice</span>
+            </a>
           </div>
         </div>
       </div>
