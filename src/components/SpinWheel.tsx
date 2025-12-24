@@ -26,78 +26,29 @@ const SpinWheel = ({ spinState, totalPool, jackpot, network }: SpinWheelProps) =
   const { playWheelSound, stopWheelSound, playWinSound, playLoseSound } = useWheelSound();
   
   // Mobile-first: çark genişliği ekrana göre
-  const size = network === 'base' ? Math.min(window.innerWidth * 0.85, 360) : Math.min(window.innerWidth * 0.85, 400);
+  const size = Math.min(window.innerWidth * 0.85, 360);
   const center = size / 2;
-  const radius = network === 'base' ? size / 2 - 8 : center - 20;
-  const segmentAngle = network === 'base' ? 360 / 7 : 360 / 7;
+  const radius = size / 2 - 8;
+  const segmentAngle = 360 / 7;
 
-  // Calculate target angle based on prize index (same as Base)
-  const calculateTargetAngle = (prizeIndex: number): number => {
-    const segmentCenterAngle = (prizeIndex + 0.5) * segmentAngle;
-    let minRotations = 4 + Math.random() * 2; // 4-6 rotations for Base
-    
-    // Monad için daha fazla tur (5-7 tur)
-    if (network === 'monad') {
-      minRotations = 5 + Math.random() * 2; // 5-7 rotations for Monad
-    }
-    
-    const baseRotation = minRotations * 360;
-    const targetAngle = baseRotation + (360 - segmentCenterAngle);
-    return targetAngle;
-  };
 
-  // Handle Monad spin result - same logic as Base
-  useEffect(() => {
-    if (network === 'monad' && monadSpinResult && localSpinState.isSpinning && monadSpinning) {
-      const targetAngle = calculateTargetAngle(monadSpinResult.prizeIndex);
-      
-      // Set target angle and prize index immediately
-      setLocalSpinState(prev => ({
-        ...prev,
-        targetAngle,
-        prizeIndex: monadSpinResult.prizeIndex
-      }));
-
-      // Let it spin for 1.5 seconds more before showing the result (kısaltıldı)
-      setTimeout(() => {
-        setLocalSpinState(prev => ({
-          ...prev,
-          resultReceived: true
-        }));
-        
-        // Then stop after final animation (kısaltıldı) - ses ve çark aynı anda durmalı
-        setTimeout(() => {
-          setLocalSpinState(prev => ({
-            ...prev,
-            isSpinning: false
-          }));
-          // Ses ve çark aynı anda durmalı
-          stopWheelSound();
-          onMonadSpinComplete?.();
-        }, 1500); // 1.5 seconds for final animation (kısaltıldı)
-      }, 1500); // 1.5 seconds of extra spinning after result (kısaltıldı)
-    }
-  }, [monadSpinResult, network, segmentAngle, onMonadSpinComplete, stopWheelSound, monadSpinning]);
   
 
 
-  // Sync localSpinState with spinState for both networks
+  // Sync localSpinState with spinState
   useEffect(() => {
     setLocalSpinState(spinState);
     
-    // Start wheel sound when Base network starts spinning
-    if (network === 'base' && spinState.isSpinning && !localSpinState.isSpinning) {
+    // Start wheel sound when spinning starts
+    if (spinState.isSpinning && !localSpinState.isSpinning) {
       playWheelSound();
     }
     
-    // Stop wheel sound when Base network stops spinning (including cancellation)
-    if (network === 'base' && !spinState.isSpinning && localSpinState.isSpinning) {
-      // Ses ve çark aynı anda durmalı
+    // Stop wheel sound when spinning stops
+    if (!spinState.isSpinning && localSpinState.isSpinning) {
       stopWheelSound();
-      // Notify parent about spin cancellation
-      onSpinCancel?.();
     }
-  }, [spinState, network, localSpinState.isSpinning, playWheelSound, stopWheelSound, onSpinCancel]);
+  }, [spinState, localSpinState.isSpinning, playWheelSound, stopWheelSound]);
 
   // Handle wallet popup interruptions
   useEffect(() => {
